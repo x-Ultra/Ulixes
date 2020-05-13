@@ -1,4 +1,5 @@
 import socket, threading
+from parser import parse_request
 
 host = "0.0.0.0"
 port = 5005
@@ -27,6 +28,8 @@ class ClientThread(threading.Thread):
 
             print("Client(%s:%s) sent : %s"%(self.ip, str(self.port), decoded))
 
+            res = parse_request(decoded)
+            print(res)
             sendBack = bytes("You sent me : "+decoded, "UTF-8")
 
             self.csocket.send(sendBack)
