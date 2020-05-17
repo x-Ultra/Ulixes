@@ -1,6 +1,7 @@
 import socket, threading
-from parser import parse_request
-
+from parser import parse_http_request,make_http_response
+from itineraries import find_itineraries
+from urllib import parse
 host = "0.0.0.0"
 port = 5005
 
@@ -20,21 +21,32 @@ class ClientThread(threading.Thread):
 
         data = "dummydata"
 
-        while len(data):
-            # TODO here extract HTTP parameter
-            data = self.csocket.recv(2048)
+        data = self.csocket.recv(2048)
 
-            decoded = data.decode("UTF-8")
+        decoded = data.decode("UTF-8")
 
-            print("Client(%s:%s) sent : %s"%(self.ip, str(self.port), decoded))
+        #extract parameters from http requests
+        parameters = parse_http_request(decoded)
 
-            res = parse_request(decoded)
-            print(res)
-            sendBack = bytes("You sent me : "+decoded, "UTF-8")
+        #check if request has all the necessary parameters
+        if ("latitude" not in parameters or "longitude" not in parameters or "interval" not in parameters or "trans" not in parameters):
+            print("Client(%s:%s) sent : %s"%(self.ip, str(self.port), "Invalid request"))
+            response = make_http_response(400)
+            self.csocket.send(response.encode("utf-8"))
+        else:
+            #calculate itineraries from parameters
+            json_res = find_itineraries((parameters["latitude"] , parameters["longitude"]), parameters["interval"], parameters["trans"])
+            
+            #trsform into http response
+            response = make_http_response(200, parameters["version"], json_res)
+            
+            print("Client(%s:%s) sent : %s"%(self.ip, str(self.port), parameters))
 
-            self.csocket.send(sendBack)
+            #send response
+            self.csocket.send(response.encode("utf-8"))
 
         print("Client at "+self.ip+" disconnected...")
+        self.csocket.close()
 
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

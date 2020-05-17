@@ -33,7 +33,8 @@ def spammer():
 
 def single_request():
 	url = "http://127.0.0.1:5005"
-	params = {"param1": "value1", "param2": "value2", "param3": "value3"}
+	params = {"latitude": "42", "longitude": "42", "interval": "27", "trans" : "0"}
 	r = requests.get(url, params = params)
+	print(r.text)
 
 single_request()
