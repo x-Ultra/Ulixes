@@ -1,7 +1,8 @@
 import socket, threading
-from parser import parse_http_request,make_http_response
-from itineraries import find_itineraries
-from urllib import parse
+
+from server.itineraries import find_itineraries
+from server.parser import make_http_response, parse_http_request
+
 host = "0.0.0.0"
 port = 5005
 
@@ -19,8 +20,6 @@ class ClientThread(threading.Thread):
 
         #clientsock.send(bytes("Welcome to the server\n", "UTF-8"))
 
-        data = "dummydata"
-
         data = self.csocket.recv(2048)
 
         decoded = data.decode("UTF-8")
@@ -36,7 +35,7 @@ class ClientThread(threading.Thread):
         else:
             #calculate itineraries from parameters
             json_res = find_itineraries((parameters["latitude"] , parameters["longitude"]), parameters["interval"], parameters["trans"])
-            
+
             #trsform into http response
             response = make_http_response(200, parameters["version"], json_res)
             
