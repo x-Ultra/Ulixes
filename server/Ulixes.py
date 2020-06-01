@@ -1,6 +1,8 @@
 import socket, threading
 from parser import parse_http_request,make_http_response
 from itineraries import find_itineraries
+from graphManager import load_from_DB, recover_distances, Graph
+import googlemaps
 from urllib import parse
 host = "0.0.0.0"
 port = 5005
@@ -47,6 +49,25 @@ class ClientThread(threading.Thread):
 
         print("Client at "+self.ip+" disconnected...")
         self.csocket.close()
+
+#load itineraries from db
+landmarks = load_from_DB()
+
+print("Landmarks recovered")
+
+# Call google maps for distances
+distances = recover_distances(landmarks)
+
+print("Distances recovered")
+
+#create graph
+g = Graph(len(landmarks))
+g.build_graph(landmarks, distances)
+
+print("Graph built")
+
+#g.print_agraph()
+
 
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
