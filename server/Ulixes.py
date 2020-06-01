@@ -1,10 +1,11 @@
 import socket, threading
 
-from server.itineraries import find_itineraries
-from server.parser import make_http_response, parse_http_request
+from itineraries import find_itineraries
+from parser import make_http_response, parse_http_request
 from graphManager import load_from_DB, recover_distances, Graph
 import googlemaps
 from urllib import parse
+import random
 
 host = "0.0.0.0"
 port = 5005
@@ -63,7 +64,8 @@ print("Distances recovered")
 #create graph
 g = Graph(len(landmarks))
 g.build_graph(landmarks, distances)
-
+nodes_weights = [random.randint(0, 100) for i in range(0, len(landmarks))]
+g.set_nodes_weights(nodes_weights)
 print("Graph built")
 
 #g.print_agraph()
