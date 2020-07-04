@@ -1,11 +1,15 @@
-import hashlib
+import base64
 import json
 
+# function that given the name of a monument (the same name used to save te monument into DynamoDB),
+# returns its image after a query into the DB
+# TODO can we use cache ?
+def get_image_by_name(imageName):
+    with open(imageName, "rb") as img_file:
+        pict = base64.b64encode(img_file.read())
+    return pict.decode("ascii")
 
-def evaluate_itinerary_id(itinerary):
-    return hashlib.sha256(itinerary.encode('utf-8')).hexdigest()
-
-
+# TODO function that given an itinerary, extract the sha-xxx of its string json
 def find_itineraries(location, interval, trasport):
     # @ location: t-uple containing two floats in string format in the form (latitude, longitude)
     # @ interval: integer in string format representing the amount of time of the visit
@@ -14,8 +18,13 @@ def find_itineraries(location, interval, trasport):
     # @ return: a json file containg all the avaible itineraries
 
     # pass parameters to algorithm
+    colosseoPict = get_image_by_name("colosseo.jpeg")
+    piazzaSpagnaPict = get_image_by_name("piazzaSpagna.jpg")
+    piramidePict = get_image_by_name("piramide.jpg")
+
     result = [
         {
+            "ID": "coolhash1",
             "MeansOfTransp": "bici",
             "Departure": "9:45",
             "ItineraryMonuments": [
@@ -23,7 +32,7 @@ def find_itineraries(location, interval, trasport):
                     "Monument":
                         {
                             "Name": "Colosseo",
-                            "Picture": [],
+                            "Picture": colosseoPict,
                             "Coordinates": "lat1, lon1"
                         },
                     "Position": "1",
@@ -33,7 +42,7 @@ def find_itineraries(location, interval, trasport):
                     "Monument":
                         {
                             "Name": "Piazza Di Spagna",
-                            "Picture": [],
+                            "Picture": piazzaSpagnaPict,
                             "Coordinates": "lat2, lon2"
                         },
                     "Position": "2",
@@ -43,7 +52,7 @@ def find_itineraries(location, interval, trasport):
                     "Monument":
                         {
                             "Name": "Piramide",
-                            "Picture": [],
+                            "Picture": piramidePict,
                             "Coordinates": "lat3, lon3"
                         },
                     "Position": "3",
@@ -52,6 +61,7 @@ def find_itineraries(location, interval, trasport):
             ]
         },
         {
+            "ID": "coolhash2",
             "MeansOfTransp": "bici",
             "Departure": "12:45",
             "ItineraryMonuments": [
@@ -59,7 +69,7 @@ def find_itineraries(location, interval, trasport):
                     "Monument":
                         {
                             "Name": "Gelateria",
-                            "Picture": [],
+                            "Picture": "",
                             "Coordinates": "lat1, lon1"
                         },
                     "Position": "1",
@@ -69,7 +79,7 @@ def find_itineraries(location, interval, trasport):
                     "Monument":
                         {
                             "Name": "CampusX",
-                            "Picture": [],
+                            "Picture": "",
                             "Coordinates": "lat2, lon2"
                         },
                     "Position": "2",
@@ -78,7 +88,7 @@ def find_itineraries(location, interval, trasport):
                 {
                     "Monument": {
                         "Name": "Mensa",
-                        "Picture": [],
+                        "Picture": "",
                         "Coordinates": "lat3, lon3"
                     },
                     "Position": "3",
