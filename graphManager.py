@@ -1,3 +1,19 @@
+import boto3
+from boto3.dynamodb.conditions import Key
+
+USE_DINAMODB = False
+
+def get_all_items():
+
+	#Set up boto3
+	dynamodb = boto3.resource('dynamodb', region_name='eu-central-1')
+	table = dynamodb.Table('Landmarks')
+
+	# recover all items
+	resp = table.scan()
+
+	return resp['Items']
+
 def readCSV(filename):
 	fd = open(filename, "r")
 
@@ -21,15 +37,23 @@ def load_from_DB():
 
 	#@ return: dict of landmarks, the dict is  "Name" =>  ( "ID", Lat" , "Long" ) 
 
-	fd = open("landmarks.csv", "r")
-
-	lines = fd.readlines()
-
 	res = {}
-	for i in range(0, len(lines)):
-	    splitted = lines[i].strip().split(", ")
-	    res[splitted[0]] = (i, splitted[1], splitted[2])
-	fd.close()
+	if USE_DINAMODB:
+		items = get_all_items()
+		for item in items:
+			print(item)
+			print(item["Name"])
+			res[item["Name"]] = (int(item["ID"]), float(item["Lat"]) , float(item["Long"]))
+		
+	else:
+		fd = open("landmarks.csv", "r")
+
+		lines = fd.readlines()
+		for i in range(1, len(lines)):
+		    splitted = lines[i].strip().split(", ")
+		    res[splitted[0]] = (i-1, splitted[1], splitted[2])
+		fd.close()
+	print(res)
 	return res
 
 def recover_distances(landmarks):
@@ -98,6 +122,7 @@ class Graph:
 
         node = AdjNode(s, e_weight)
         node.next = self.graph[d]
+        print(d)
         self.graph[d] = node
         self.nodes_values[d] = d_name
 
