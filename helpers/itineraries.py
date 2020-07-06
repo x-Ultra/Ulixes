@@ -5,7 +5,7 @@ import json
 # returns its image after a query into the DB
 # TODO can we use cache ?
 def get_image_by_name(imageName):
-    with open(imageName, "rb") as img_file:
+    with open("images/" + imageName, "rb") as img_file:
         pict = base64.b64encode(img_file.read())
     return pict.decode("ascii")
 

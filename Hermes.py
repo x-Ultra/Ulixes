@@ -1,15 +1,25 @@
 import socket, threading
-
 from helpers.itineraries import find_itineraries
 from helpers.parser import make_http_response, parse_http_request
 from helpers.graphManager import Graph
 from helpers.dbManager import load_from_DB, recover_distances
-import googlemaps
 from urllib import parse
+import requests
 import random
 
+#Cloud ip and port
+CLOUD_IP = "127.0.0.1"
+CLOUD_PORT = 5005  
+
+#ID of the fog node
+FOG_ID = 1
+
+#DEBUG, 1 to send all requests to cloud
+#       0 to handle all requests locally
+ASK_CLOUD = 0
+
 host = "0.0.0.0"
-port = 5005
+port = 8888
 
 class ClientThread(threading.Thread):
 
@@ -24,6 +34,8 @@ class ClientThread(threading.Thread):
         print("Connection from : "+ip+":"+str(port))
 
         #clientsock.send(bytes("Welcome to the server\n", "UTF-8"))
+
+        data = "dummydata"
 
         data = self.csocket.recv(2048)
 
@@ -41,19 +53,33 @@ class ClientThread(threading.Thread):
             #calculate itineraries from parameters
             json_res = find_itineraries((parameters["latitude"] , parameters["longitude"]), parameters["interval"], parameters["trans"])
 
-            #trsform into http response
-            response = make_http_response(200, parameters["version"], json_res)
-            
-            print("Client(%s:%s) sent : %s"%(self.ip, str(self.port), parameters))
+            if ASK_CLOUD == 0:
+                #trasform into http response
+                response = make_http_response(200, parameters["version"], json_res)
+                
+                print("Client(%s:%s) sent : %s"%(self.ip, str(self.port), parameters))
 
-            #send response
-            self.csocket.send(response.encode("utf-8"))
+                #send response
+                self.csocket.send(response.encode("utf-8"))
+            else:
+                #pop version from parameters
+                version = parameters.pop('version', None)
+                
+                #request the cloud with the original parameters
+                url = "http://" + CLOUD_IP + ":" + str(CLOUD_PORT)
+                r = requests.get(url, parameters)
+
+                #send response
+                response = make_http_response(200, version, r.text)                
+                self.csocket.send(response.encode("utf-8"))
+                
+
 
         print("Client at "+self.ip+" disconnected...")
         self.csocket.close()
 
 #load itineraries from db
-landmarks = load_from_DB("Landmarks")
+landmarks = load_from_DB("Landmarks", FOG_ID)
 
 print("Landmarks recovered")
 
@@ -70,7 +96,6 @@ g.set_nodes_weights(nodes_weights)
 print("Graph built")
 
 #g.print_agraph()
-
 
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
