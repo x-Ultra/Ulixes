@@ -8,38 +8,45 @@ class AdjNode:
 class Graph:
 	def __init__(self, num):
 	    self.V = num
-	    self.graph = [None] * self.V
-	    self.nodes_weights = [0]*self.V
-	    self.nodes_values = [0]*self.V
+	    self.graph = {}
+	    self.nodes_weights = {}
+	    self.nodes_values = {}
 
 	# Add edges
 	def add_edge(self, s, d, s_name, d_name, e_weight):
 	    node = AdjNode(d, e_weight)
-	    node.next = self.graph[s]
+	    node.next = self.graph.get(s)
 	    self.graph[s] = node
 	    self.nodes_values[s] = s_name
 
 	    node = AdjNode(s, e_weight)
-	    node.next = self.graph[d]
+	    node.next = self.graph.get(d)
 	    self.graph[d] = node
 	    self.nodes_values[d] = d_name
 
 	# Print the graph
 	def print_agraph(self):
-	    for i in range(self.V):
-	        print("Vertex " + str(self.nodes_values[i]) + " ( " + str(self.nodes_weights[i]) + " ):", end="")
-	        temp = self.graph[i]
+	    for k, i in self.graph.items():
+	        print("Vertex " + str(self.nodes_values[k]) + " ( " + str(self.nodes_weights[k]) + " ):", end="")
+	        temp = i
 	        while temp:
 	            print(" -{}-> {}".format(temp.weight, self.nodes_values[temp.vertex]), end="")
 	            temp = temp.next
 	        print(" \n")
 
+	    #print(self.graph)
 
-	def set_nodes_weights(self, weights):
-		#@ weights, list of nodes weights
 
-		for i in range(0, len(weights)):
-			self.nodes_weights[i] = weights[i]
+	def set_nodes_weights(self, weights=None):
+		#@ weights, dict of nodes weights
+
+		if weights == None:
+			import random
+			
+			for k in self.graph:	
+				self.nodes_weights[k] = random.randint(0, 100)
+		else:
+			self.nodes_weights = weights
 
 	def build_graph(self, nodes, weights):
 
@@ -48,14 +55,31 @@ class Graph:
 
 		#@ return, graph as an adiacency list
 
+		infinito = {}
 		for edge in weights:
-			try:
-				start = edge["Start"]
-				end = edge["End"]
+			#print(edge)
+			start = edge["Start"]
+			end = edge["End"]
+			#print(nodes[start][0], nodes[end][0], start, end, edge["Seconds"])
+
+			#if both in local graph
+			if nodes.get(start) != None and nodes.get(end) != None:
 				self.add_edge(nodes[start][0], nodes[end][0], start, end, edge["Seconds"])
-			except:
-				#For now not all distances are covered
-				pass
+			#If start is not in local graph
+			elif nodes.get(start) == None and nodes.get(end) != None:
+				#if this is the closest to end until now
+				if infinito.get(nodes[end][0]) == None or int(infinito.get(nodes[end][0])[1]) > int(edge["Seconds"]):
+					infinito[nodes[end][0]] = (end, edge["Seconds"])
+			#if end is not in local graph
+			elif nodes.get(start) == None and nodes.get(end) != None:
+				#if this is the closest to start until now
+				if infinito.get(nodes[start][0]) == None or int(infinito.get(nodes[start][0])[1]) > int(edge["Seconds"]):
+					infinito[nodes[start][0]] = (start, edge["Seconds"])
+
+		for k, v in infinito.items():
+			self.add_edge(-1, k, "Infinito", v[0], v[1])
+
+
 	    	
 
 

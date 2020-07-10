@@ -91,11 +91,11 @@ print("Distances recovered")
 #create graph
 g = Graph(len(landmarks))
 g.build_graph(landmarks, distances)
-nodes_weights = [random.randint(0, 100) for i in range(0, len(landmarks))]
-g.set_nodes_weights(nodes_weights)
+#random weights for now
+g.set_nodes_weights()
 print("Graph built")
 
-#g.print_agraph()
+g.print_agraph()
 
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

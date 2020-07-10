@@ -1,7 +1,7 @@
 import boto3
 from boto3.dynamodb.conditions import Key
 
-USE_DINAMODB = True
+USE_DINAMODB = False
 
 def get_items(table, fog_id=None):
 
@@ -68,7 +68,8 @@ def load_from_DB(table, fog_id=None):
 		lines = fd.readlines()
 		for i in range(1, len(lines)):
 		    splitted = lines[i].strip().split(", ")
-		    res[splitted[0]] = (i-1, splitted[1], splitted[2])
+		    if (fog_id == None or splitted[fog_id+2] == "1"):
+		    	res[splitted[0]] = (i-1, splitted[1], splitted[2])
 		fd.close()
 	#print(res)
 	return res
