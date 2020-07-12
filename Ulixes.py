@@ -3,7 +3,7 @@ import socket, threading
 from helpers.itineraries import find_itineraries
 from helpers.parser import make_http_response, parse_http_request
 from helpers.graphManager import Graph
-from helpers.dbManager import load_from_DB, recover_distances
+from helpers.dbManager import recover_landmarks, recover_distances
 import googlemaps
 from urllib import parse
 import random
@@ -53,12 +53,12 @@ class ClientThread(threading.Thread):
         self.csocket.close()
 
 #load itineraries from db
-landmarks = load_from_DB("Landmarks")
+landmarks = recover_landmarks()
 
 print("Landmarks recovered")
 
 # Call google maps for distances
-distances = recover_distances(landmarks)
+distances = recover_distances()
 
 print("Distances recovered")
 
@@ -69,7 +69,7 @@ nodes_weights = [random.randint(0, 100) for i in range(0, len(landmarks))]
 g.set_nodes_weights(nodes_weights)
 print("Graph built")
 
-#g.print_agraph()
+g.print_agraph()
 
 
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

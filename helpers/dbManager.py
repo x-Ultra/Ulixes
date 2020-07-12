@@ -1,17 +1,17 @@
 import boto3
 from boto3.dynamodb.conditions import Key
 
-USE_DINAMODB = False
+USE_DINAMODB_LAND = False
+USE_DINAMODB_DIST = False
 
-def get_items(table, fog_id=None):
+def get_landmarks(table, fog_id=None):
 
-	#@ table: string, name of the table to query
 	#@ fog_id: int, id of the fog node that colled this function
 	#@ return: list of items corressponding to the fog id or all the items
 
 	#Set up boto3
 	dynamodb = boto3.resource('dynamodb', region_name='eu-central-1')
-	table = dynamodb.Table(table)
+	table = dynamodb.Table("Landmarks")
 
 	if (fog_id == None):
 		# recover all items
@@ -26,9 +26,34 @@ def get_items(table, fog_id=None):
 				  },
                   FilterExpression="Fog"+str(fog_id)+" = :FogId")
 
-	for item in resp['Items']:
-	    print(item)
 	return resp['Items']
+
+def get_distances(fog_id=None):
+
+	#@ fog_id: int, id of the fog node that called this function
+	#@ return: list of items corressponding to the fog id or all the items
+
+	#Set up boto3
+	dynamodb = boto3.resource('dynamodb', region_name='eu-central-1')
+	table = dynamodb.Table("Distances")
+
+	if (fog_id == None):
+		# recover all items
+		resp = table.scan(ProjectionExpression = '#s, #e, Seconds, Transports',
+                  ExpressionAttributeNames = {'#s': 'Start', '#e' : 'End'})
+	else:
+		#Recover items corrisponding to a specific fog_id
+		resp = table.scan(ProjectionExpression = '#s, #e, Seconds, Transports',
+                  ExpressionAttributeNames = {'#s': 'Start', '#e' : 'End'},
+                  ExpressionAttributeValues= {
+			        ":FogId": 1,
+				  },
+                  FilterExpression="Fog"+str(fog_id)+" = :FogId")
+
+
+	return resp['Items']
+
+
 
 def readCSV(filename):
 	fd = open(filename, "r")
@@ -49,19 +74,18 @@ def readCSV(filename):
 
 	return final_list
 
-def load_from_DB(table, fog_id=None):
+def recover_landmarks(fog_id=None):
 
 
 	#@ return: dict of landmarks, the dict is  "Name" =>  ( "ID", Lat" , "Long" ) 
 
 	res = {}
-	if USE_DINAMODB:
-		items = get_items(table, fog_id)
+	if USE_DINAMODB_LAND:
+		items = get_landmarks(fog_id)
 		for item in items:
 			#print(item)
 			#print(item["Name"])
 			res[item["Name"]] = (int(item["ID"]), float(item["Lat"]) , float(item["Long"]))
-		
 	else:
 		fd = open("landmarks.csv", "r")
 
@@ -74,13 +98,28 @@ def load_from_DB(table, fog_id=None):
 	#print(res)
 	return res
 
-def recover_distances(landmarks):
+def recover_distances(fog_id=None):
 
 	#@ landmarks: list of lists of landmarks, the second list is [ "Name", "Lat" , "Long" ]
-	#@ return: list of dict with key "Start" "End" "Distance" and "Transport"
+	#@ return: list of dict with key "Start" "End" "Seconds" and "Transport"
 
 	# too poor to call google every time
-	return readCSV("distance.csv")
+
+	res = []
+	if USE_DINAMODB_DIST:
+		res = get_distances(fog_id)
+	else:
+		fd = open("distancesDB.csv", "r")
+
+		lines = fd.readlines()
+
+		for i in range(1, len(lines)):
+		    splitted = lines[i].strip().split(", ")
+		    if (fog_id == None or splitted[fog_id+3] == "1"):
+		    	res.append({"Start": splitted[0], "End": splitted[1], "Seconds": splitted[2], "Transport": splitted[3]})
+		fd.close()
+
+	return res
 
 
 	# fd1 = open("rawResult2.txt", "a")

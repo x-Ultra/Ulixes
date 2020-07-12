@@ -37,8 +37,8 @@ try:
 
         # Rate of access
         ProvisionedThroughput={
-            "ReadCapacityUnits": 1,
-            "WriteCapacityUnits": 1
+            "ReadCapacityUnits": 3,
+            "WriteCapacityUnits": 3
         }
     )
     print("Table created successfully!")
@@ -68,11 +68,13 @@ lines = fd.readlines()
 
 # Write multiple items with one requests with batch writer
 with table.batch_writer() as batch:
-    for i in range(1, len(lines)):
+    for i in range(1, 5):
         splitted = lines[i].strip().split(", ")
         batch.put_item(Item={"Start": splitted[0], "End": splitted[1], "Seconds": int(splitted[2]), "Transports": splitted[3], "Fog1": Decimal(splitted[4]), "Fog2" : Decimal(splitted[5])})
         #print({"Name": splitted[0], "ID": int(i), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]) })
-
-print("Item inserted successfuly!")
+        if (i%100 == 0):
+            print(i, " items inserted!")
+print("Distances are online!")
 
 ######################################
+

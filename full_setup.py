@@ -29,8 +29,8 @@ try:
 
         # Rate of access
         ProvisionedThroughput={
-            "ReadCapacityUnits": 1,
-            "WriteCapacityUnits": 1
+            "ReadCapacityUnits": 10,
+            "WriteCapacityUnits": 10
         }
     )
     print("Landmarks table created successfully!")
@@ -54,7 +54,7 @@ dynamodb = boto3.resource('dynamodb', region_name='eu-central-1')
 table = dynamodb.Table('Landmarks')
 
 #Recover landmarks
-fd = open("landmarks.csv", "r")
+fd = open("fullMonumentInfo.csv", "r")
 
 lines = fd.readlines()
 
@@ -62,7 +62,7 @@ lines = fd.readlines()
 with table.batch_writer() as batch:
     for i in range(1, len(lines)):
         splitted = lines[i].strip().split(", ")
-        batch.put_item(Item={"Name": splitted[0], "ID": int(i-1), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]), "Fog1": Decimal(splitted[3]), "Fog2" : Decimal(splitted[4])})
+        batch.put_item(Item={"Name": splitted[0], "ID": int(i-1), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]), "Fog1": Decimal(splitted[3]), "Fog2" : Decimal(splitted[4]), "PictureUrl" : splitted[5], "Description": splitted[7]})
         #print({"Name": splitted[0], "ID": int(i), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]) })
 
 print("Landamrks are online!")
@@ -104,8 +104,8 @@ try:
 
         # Rate of access
         ProvisionedThroughput={
-            "ReadCapacityUnits": 1,
-            "WriteCapacityUnits": 1
+            "ReadCapacityUnits": 10,
+            "WriteCapacityUnits": 10
         }
     )
     print("Disntaces table created successfully!")
