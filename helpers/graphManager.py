@@ -79,11 +79,37 @@ class Graph:
 		for k, v in infinito.items():
 			self.add_edge(-1, k, "Infinito", v[0], v[1])
 
+	# Implementation of bellman - Ford algorithm
+	def bellman_ford(self, src):  
 
-	    	
+		#@ src, source index for the algorithm
 
+		#@ return, minimum distances from the source node
 
+		#Inizialize ditances
+		dist = {}
+		dist[src] = 0
+		nodes = list(self.graph.keys())
+		for i in nodes:
+			if i != src:
+				dist[i] = float("inf")
 
+  		#Iterate
+		for m in range(self.V - 1):  
+			#Calcualate distances
+			for u in nodes:
+				adj = self.graph[u] 
+				while adj:
+					if dist[u]!= float("Inf") and dist[u] + int(adj.weight) < dist[adj.vertex]:  
+						dist[adj.vertex] = dist[u] + int(adj.weight)
+					adj = adj.next  
+
+		# return result 
+		return dist  	    	
+
+	# Function to che if and index is part of the graph
+	def check_index(self, index):
+		return self.graph.get(index) != None
 
 
 

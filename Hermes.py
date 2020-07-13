@@ -1,5 +1,5 @@
 import socket, threading
-from helpers.itineraries import find_itineraries
+from helpers.itineraries import find_itineraries, get_player_node
 from helpers.parser import make_http_response, parse_http_request
 from helpers.graphManager import Graph
 from helpers.dbManager import recover_landmarks, recover_distances
@@ -20,6 +20,8 @@ ASK_CLOUD = 0
 
 host = "0.0.0.0"
 port = 8888
+
+
 
 class ClientThread(threading.Thread):
 
@@ -53,7 +55,8 @@ class ClientThread(threading.Thread):
             #calculate itineraries from parameters
             json_res = find_itineraries((parameters["latitude"] , parameters["longitude"]), parameters["interval"], parameters["trans"])
 
-            if ASK_CLOUD == 0:
+            node_index = get_player_node(parameters["latitude"] , parameters["longitude"], parameters["interval"])
+            if g.check_index(node_index) and infinite_distances[node_index] > int(parameters["interval"]):
                 #trasform into http response
                 response = make_http_response(200, parameters["version"], json_res)
                 
@@ -95,8 +98,12 @@ g.build_graph(landmarks, distances)
 g.set_nodes_weights()
 print("Graph built")
 
-g.print_agraph()
+#g.print_agraph()
 
+#get distance from infinite
+infinite_distances = g.bellman_ford(-1)
+
+print("Distance from infinite calculated")
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 

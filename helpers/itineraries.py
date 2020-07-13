@@ -1,6 +1,17 @@
 import base64
 import json
 
+#Function that recovers the node that is closest to the tourist position
+def get_player_node(lat, long, landmarks):
+
+    #@ lat, long: int, int, the postition of the users
+    #@ landmarks: list of monuments with coordinates
+
+    #@ return: index of the node closest to the user
+
+    # TODO 
+    return 8
+
 # function that given the name of a monument (the same name used to save te monument into DynamoDB),
 # returns its image after a query into the DB
 # TODO can we use cache ?

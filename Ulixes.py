@@ -69,7 +69,7 @@ nodes_weights = [random.randint(0, 100) for i in range(0, len(landmarks))]
 g.set_nodes_weights(nodes_weights)
 print("Graph built")
 
-g.print_agraph()
+#g.print_agraph()
 
 
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

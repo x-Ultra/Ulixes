@@ -76,7 +76,6 @@ def readCSV(filename):
 
 def recover_landmarks(fog_id=None):
 
-
 	#@ return: dict of landmarks, the dict is  "Name" =>  ( "ID", Lat" , "Long" ) 
 
 	res = {}
