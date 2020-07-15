@@ -62,21 +62,23 @@ def readCSV(filename):
 
 	names = lines[0].strip().split(", ")
 
+	print(names)
 	final_list = []
 	for i in range(1, len(lines)):
 		values = lines[i].strip().split(", ")
 		if len(values) != len(names):
-			continue
-		dict_info = {}		
+			values = lines[i].strip().split(",")
+		dict_info = {}	
 		for j in range(len(names)):
-			dict_info[names[j]] = values[j]
+			dict_info[names[j]] = values[j].strip()
 		final_list.append(dict_info)
 
 	return final_list
 
+
 def recover_landmarks(fog_id=None):
 
-	#@ return: dict of landmarks, the dict is  "Name" =>  ( "ID", Lat" , "Long" ) 
+	#@ return: dict of landmarks, the dict is  "Name" =>  ( "ID", "Lat" , "Long" ) 
 
 	res = {}
 	if USE_DINAMODB_LAND:
