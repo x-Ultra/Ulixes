@@ -5,6 +5,7 @@ import googlemaps
 
 USE_GOOGLE = False
 
+
 # formula used to calculate the distance in km between 2 points
 # in the globe, given their latitude and longitude
 def haversine(lon1, lat1, lon2, lat2):
@@ -96,8 +97,9 @@ def find_itineraries(location, interval, graph):
 
     # @ return: a json file containg all the avaible itineraries
 
-    #print(graph.find_best_path(location, interval))
+    print(graph.find_best_path(location, interval))
     
+    # [(123, [1,2,3]), (321, [12,32])]
     # pass parameters to algorithm
     colosseoPict = get_image_by_name("colosseo.jpeg")
     piazzaSpagnaPict = get_image_by_name("piazzaSpagna.jpg")

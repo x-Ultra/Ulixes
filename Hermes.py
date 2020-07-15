@@ -3,6 +3,7 @@ from helpers.itineraries import find_itineraries, get_player_node
 from helpers.parser import make_http_response, parse_http_request
 from helpers.graphManager import Graph
 from helpers.dbManager import recover_landmarks, recover_distances
+from heartbeat.heartbeat import join_bootstrap
 from urllib import parse
 import requests
 import random
@@ -20,7 +21,14 @@ ASK_CLOUD = 0
 
 host = "0.0.0.0"
 port = 8888
+   
+MY_IP = "172.74.2.203"
+BOOTSTRAP_IP = "172.74.3.189"
+ACCEPT_LIST_PORT = 11111
 
+def bootstrap():
+    join_bootstrap(25, MY_IP, "1214.234", "1114.243", BOOTSTRAP_IP, ACCEPT_LIST_PORT,
+                   9999, 10)
 
 
 class ClientThread(threading.Thread):
@@ -139,7 +147,7 @@ g_driving.build_graph(landmarks, only_walking)
 g_driving.set_nodes_weights()
 g_driving.set_nodes_times()
 
-print("Graph for walking built")
+print("Graph for driving built")
 
 #g_driving.print_agraph()
 
@@ -153,6 +161,12 @@ print("Distance from infinite calculated for walking")
 infinite_distances_driving = g_driving.bellman_ford(-1)
 
 print("Distance from infinite calculated for driving")
+
+
+t3 = threading.Thread(target=bootstrap)
+t3.start()
+
+print("Connected to bootstrap")
 
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -168,3 +182,4 @@ while True:
     #pass clientsock to the ClientThread thread object being created
     newthread = ClientThread(ip, port, clientsock)
     newthread.start()
+

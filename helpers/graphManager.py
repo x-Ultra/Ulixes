@@ -23,6 +23,7 @@ class Graph:
 	    self.nodes_values = {}
 	    self.nodes_times = {}
 
+	    # graph[ID]  = AdjNode.next = AdjNode
 	# Add edges
 	def add_edge(self, s, d, s_name, d_name, e_weight):
 	    node = AdjNode(d, e_weight)

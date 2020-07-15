@@ -34,10 +34,12 @@ class ClientThread(threading.Thread):
 
         #check if request has all the necessary parameters
         if ("latitude" not in parameters or "longitude" not in parameters or "interval" not in parameters or "trans" not in parameters):
+            #print(data)
             print("Client(%s:%s) sent : %s"%(self.ip, str(self.port), "Invalid request"))
             response = make_http_response(400)
             self.csocket.send(response.encode("utf-8"))
         else:
+            print(parameters)
             if int(parameters["interval"]) < 0:
                 json_res = "{}"
             else:
@@ -93,6 +95,7 @@ g_driving = Graph(len(landmarks))
 
 only_driving = []   
 
+# [{"Start": "noem di start" , "End" : "nome"}, {}]
 for i in distances:
     if i["Transport"] == "driving":
         only_driving.append(i)
@@ -101,7 +104,7 @@ g_driving.build_graph(landmarks, only_driving)
 #random weights for now
 g_driving.set_nodes_weights()
 g_driving.set_nodes_times()
-print("Graph for walking built")
+print("Graph for driving built")
 
 #g_driving.print_agraph()
 
