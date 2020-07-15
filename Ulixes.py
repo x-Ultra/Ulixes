@@ -4,7 +4,7 @@ from helpers.itineraries import find_itineraries, get_player_node
 from helpers.parser import make_http_response, parse_http_request
 from helpers.graphManager import Graph
 from helpers.dbManager import recover_landmarks, recover_distances
-import googlemaps
+#import googlemaps
 from urllib import parse
 import random
 
