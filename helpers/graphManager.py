@@ -1,9 +1,19 @@
+def ordered_insert(lista, tupla):
+    
+    if len(lista) == 0:
+    	return [tupla]
+
+    i = 0
+    while i < len(lista) and lista[i][0] > tupla[0]:
+        i += 1
+
+    return lista[:i] + [tupla] + lista[i:]
+
 class AdjNode:
     def __init__(self, value, weight):
         self.vertex = value
         self.weight = weight
         self.next = None
-
 
 class Graph:
 	def __init__(self, num):
@@ -11,6 +21,7 @@ class Graph:
 	    self.graph = {}
 	    self.nodes_weights = {}
 	    self.nodes_values = {}
+	    self.nodes_times = {}
 
 	# Add edges
 	def add_edge(self, s, d, s_name, d_name, e_weight):
@@ -47,6 +58,17 @@ class Graph:
 				self.nodes_weights[k] = random.randint(0, 100)
 		else:
 			self.nodes_weights = weights
+
+	def set_nodes_times(self, times=None):
+		#@ weights, dict of nodes weights
+
+		if times == None:
+			import random
+			
+			for k in self.graph:	
+				self.nodes_times[k] = random.randint(60*60, 120*60)
+		else:
+			self.nodes_times = times
 
 	def build_graph(self, nodes, weights):
 
@@ -110,6 +132,35 @@ class Graph:
 	# Function to che if and index is part of the graph
 	def check_index(self, index):
 		return self.graph.get(index) != None
+
+
+	def find_best_path_rec(self, start, T, P, seen):
+		seen.append(start)
+		P = P + int(self.nodes_weights[start])
+		T = int(T) - int(self.nodes_times[start])
+		temp = self.graph[start]
+
+		#print(start)
+		best = []
+		while temp != None:
+			#print(temp.weight, T)
+			if int(temp.weight) < int(T) and temp.vertex not in seen:
+				sol = self.find_best_path_rec(temp.vertex, int(T)-int(temp.weight), P, seen)
+				for i in sol:
+					best = ordered_insert(best, i)
+			temp = temp.next
+
+		to_ret = seen.copy()
+		seen.remove(start)
+		#print(seen)
+		if best == []:
+			return [(P, to_ret)]
+		else:
+			return best[:5]
+
+	def find_best_path(self, start, T):
+		return self.find_best_path_rec(start, T, 0, [])
+
 
 
 

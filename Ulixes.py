@@ -1,6 +1,6 @@
 import socket, threading
 
-from helpers.itineraries import find_itineraries
+from helpers.itineraries import find_itineraries, get_player_node
 from helpers.parser import make_http_response, parse_http_request
 from helpers.graphManager import Graph
 from helpers.dbManager import recover_landmarks, recover_distances
@@ -38,9 +38,17 @@ class ClientThread(threading.Thread):
             response = make_http_response(400)
             self.csocket.send(response.encode("utf-8"))
         else:
-            #calculate itineraries from parameters
-            json_res = find_itineraries((parameters["latitude"] , parameters["longitude"]), parameters["interval"], parameters["trans"])
-
+            if int(parameters["interval"]) < 0:
+                json_res = "{}"
+            else:
+                node_index, dist, lat, long = get_player_node(parameters["latitude"] , parameters["longitude"], landmarks, parameters["trans"])
+            
+                #calculate itineraries from parameters
+                if (parameters["trans"] == "0"):
+                    json_res = find_itineraries(node_index, int(parameters["interval"]) - dist, g_walking)
+                else:
+                    json_res = find_itineraries(node_index, int(parameters["interval"]) - dist, g_driving)
+                
             #trsform into http response
             response = make_http_response(200, parameters["version"], json_res)
             
@@ -62,15 +70,40 @@ distances = recover_distances()
 
 print("Distances recovered")
 
-#create graph
-g = Graph(len(landmarks))
-g.build_graph(landmarks, distances)
-nodes_weights = [random.randint(0, 100) for i in range(0, len(landmarks))]
-g.set_nodes_weights(nodes_weights)
-print("Graph built")
 
-#g.print_agraph()
+#create graph for walking
+g_walking = Graph(len(landmarks))
 
+only_walking = []   
+
+for i in distances:
+    if i["Transport"] == "walking":
+        only_walking.append(i)
+
+g_walking.build_graph(landmarks, only_walking)
+#random weights for now
+g_walking.set_nodes_weights()
+g_walking.set_nodes_times()
+print("Graph for walking built")
+
+#g_walking.print_agraph()
+
+#create graph for driving
+g_driving = Graph(len(landmarks))
+
+only_driving = []   
+
+for i in distances:
+    if i["Transport"] == "driving":
+        only_driving.append(i)
+
+g_driving.build_graph(landmarks, only_driving)
+#random weights for now
+g_driving.set_nodes_weights()
+g_driving.set_nodes_times()
+print("Graph for walking built")
+
+#g_driving.print_agraph()
 
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
