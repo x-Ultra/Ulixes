@@ -98,21 +98,25 @@ def get_monument_name_byID(monumentIndex):
     monumentName = "Colosseo"
     return monumentName
 
+
 # TODO
 def get_monument_url_byName(monName):
     monUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/20160806-DSCF1573-BalTone.jpg/260px-20160806-DSCF1573-BalTone.jpg"
     return monUrl
+
 
 # TODO
 def get_coordinates_byName(monName):
     coords = "lat2, lon2"
     return coords
 
+
 # TODO
 def get_seconds_to_next_monument(id1, id2):
     # retrieve seconds to go from node with index id1
     # to node with index id2
     return 1000
+
 
 # TODO
 def seconds_from_user_tofirstnode(userLat, userLon, id1):
@@ -128,13 +132,13 @@ def build_json_itineraries(solutions, transp, userLat, userLon, t):
     itineraryList = []
     nowNow = datetime.datetime.now()
     departure = datetime.datetime.now().strftime('%H:%M')
+    count = 0
     for solution in solutions:
         # current time hh:mmù
         now = nowNow
         departure = datetime.datetime.now().strftime('%H:%M')
         itinerary = solution[1]
         # something like [1, 2, 3, 4]
-
         # array of dictionaries
         monuments = []
         for monumentIndex in itinerary:
@@ -145,6 +149,8 @@ def build_json_itineraries(solutions, transp, userLat, userLon, t):
             image = pictureManager.Image(monName, monumentImageUrl)
             monument["Picture"] = pictureManager.getBase64Picture(image)
             monument["Coordinates"] = get_coordinates_byName(monName)
+            monuments.append(monument)
+
 
         itineraryMonuments = []
         position = 1
@@ -160,25 +166,25 @@ def build_json_itineraries(solutions, transp, userLat, userLon, t):
                 arrTime = now + datetime.timedelta(seconds=secondsToNext)
                 itinMonument["ExpectedArrTime"] = arrTime.strftime('%H:%M')
             else:
-                id1 = itinerary[position-1]
+                id1 = itinerary[position - 1]
                 sec = seconds_from_user_tofirstnode(userLat, userLon, id1)
                 arrTime = now + datetime.timedelta(seconds=sec)
                 itinMonument["ExpectedArrTime"] = arrTime.strftime('%H:%M')
 
             now = arrTime
             itineraryMonuments.append(itinMonument)
-            position += 1
+            position = position + 1
 
         itinerary = {}
         itinerary["MeansOfTransp"] = transp
         itinerary["Departure"] = departure
         itinerary["ItineraryMonuments"] = itineraryMonuments
-        itinerary["ID"] = str(userLat)+str(userLon)+transp+str(t)
+        itinerary["ID"] = str(userLat) + str(userLon) + transp + str(t) + str(count)
+        count = count + 1
 
         itineraryList.append(itinerary)
 
     return json.dumps(itineraryList)
-
 
 
 def find_itineraries(location, interval, graph):
@@ -273,3 +279,9 @@ def find_itineraries(location, interval, graph):
         }
     ]
     return json.dumps(result)
+
+"""
+if __name__ == "__main__":
+    j = build_json_itineraries([(1, [1, 2, 3]), (2, [2, 3])], "bici", "1234.5", "1233.2", 1000)
+    print(j)
+"""
