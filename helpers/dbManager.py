@@ -78,7 +78,7 @@ def readCSV(filename):
 
 def recover_landmarks(fog_id=None):
 
-	#@ return: dict of landmarks, the dict is  "Name" =>  ( "ID", "Lat" , "Long" ) 
+	#@ return: dict of landmarks, the dict is  "Name" =>  ( "ID", "Lat" , "Long", "Url", "Description") 
 
 	res = {}
 	if USE_DINAMODB_LAND:
@@ -88,13 +88,13 @@ def recover_landmarks(fog_id=None):
 			#print(item["Name"])
 			res[item["Name"]] = (int(item["ID"]), float(item["Lat"]) , float(item["Long"]))
 	else:
-		fd = open("landmarks.csv", "r")
+		fd = open("landmarksComplete.csv", "r")
 
 		lines = fd.readlines()
 		for i in range(1, len(lines)):
 		    splitted = lines[i].strip().split(", ")
 		    if (fog_id == None or splitted[fog_id+2] == "1"):
-		    	res[splitted[0]] = (i-1, splitted[1], splitted[2])
+		    	res[splitted[0]] = (i-1, splitted[1], splitted[2], splitted[5], splitted[6])
 		fd.close()
 	#print(res)
 	return res

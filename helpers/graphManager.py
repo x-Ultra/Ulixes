@@ -123,8 +123,8 @@ class Graph:
 			for u in nodes:
 				adj = self.graph[u] 
 				while adj:
-					if dist[u]!= float("Inf") and dist[u] + int(adj.weight) < dist[adj.vertex]:  
-						dist[adj.vertex] = dist[u] + int(adj.weight)
+					if dist[u]!= float("Inf") and dist[u] + int(adj.weight) + int(self.nodes_times[adj.vertex]) < dist[adj.vertex]:  
+						dist[adj.vertex] = dist[u] + int(adj.weight)  + int(self.nodes_times[adj.vertex])
 					adj = adj.next  
 
 		# return result 
@@ -162,6 +162,17 @@ class Graph:
 	def find_best_path(self, start, T):
 		return self.find_best_path_rec(start, T, 0, [])
 
+	def get_distance(self, id1, id2):
+
+		id1 = int(id1)
+		id2 = int(id2)
+
+		temp = self.graph[id1]
+
+		while temp != None and temp.vertex != id2:
+			temp = temp.next
+
+		return int(temp.weight)
 
 
 

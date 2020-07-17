@@ -39,18 +39,20 @@ class ClientThread(threading.Thread):
             response = make_http_response(400)
             self.csocket.send(response.encode("utf-8"))
         else:
-            print(parameters)
             if int(parameters["interval"]) < 0:
                 json_res = "{}"
             else:
                 node_index, dist, lat, long = get_player_node(parameters["latitude"] , parameters["longitude"], landmarks, parameters["trans"])
-            
-                #calculate itineraries from parameters
-                if (parameters["trans"] == "0"):
-                    json_res = find_itineraries(node_index, int(parameters["interval"]) - dist, g_walking)
+
+                if int(parameters["interval"]) - dist < 0:
+                    json_res = "{}"
                 else:
-                    json_res = find_itineraries(node_index, int(parameters["interval"]) - dist, g_driving)
-                
+                    #calculate itineraries from parameters
+                    if (parameters["trans"] == "0"):
+                        json_res = find_itineraries(node_index, int(parameters["interval"]) - dist, g_walking, landmarks, dist, "walking", parameters["latitude"] , parameters["longitude"])
+                    else:
+                        json_res = find_itineraries(node_index, int(parameters["interval"]) - dist, g_driving, landmarks, dist, "driving", parameters["latitude"] , parameters["longitude"])
+                    
             #trsform into http response
             response = make_http_response(200, parameters["version"], json_res)
             

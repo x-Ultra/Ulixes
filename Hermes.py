@@ -59,46 +59,49 @@ class ClientThread(threading.Thread):
         else:
             node_index, dist, lat, long = get_player_node(parameters["latitude"] , parameters["longitude"], landmarks, parameters["trans"])
             
-            if (parameters["trans"] == "0"):
-                check = g_walking.check_index(node_index) and infinite_distances_walking[node_index] > int(parameters["interval"])
+            if int(parameters["interval"]) - dist < 0:
+                json_res = "{}"
             else:
-                check = g_driving.check_index(node_index) and infinite_distances_driving[node_index] > int(parameters["interval"])
-            
-
-            if check:
-                #Handle locally
-                print("Handle request locally")
-
-                #calculate itineraries from parameters
                 if (parameters["trans"] == "0"):
-                    json_res = find_itineraries(node_index, int(parameters["interval"]) - dist, g_walking)
+                    check = g_walking.check_index(node_index) and infinite_distances_walking[node_index] > int(parameters["interval"])
                 else:
-                    json_res = find_itineraries(node_index, int(parameters["interval"]) - dist, g_driving)
+                    check = g_driving.check_index(node_index) and infinite_distances_driving[node_index] > int(parameters["interval"])
                 
-                #trasform into http response
-                response = make_http_response(200, parameters["version"], json_res)
-                
-                print("Client(%s:%s) sent : %s"%(self.ip, str(self.port), parameters))
 
-                #send response
-                self.csocket.send(response.encode("utf-8"))
-            else:
-                #Send to cloud
-                print("Sent request to Cloud")
+                if check:
+                    #Handle locally
+                    print("Handle request locally")
 
-                #pop version from parameters
-                version = parameters.pop('version', None)
-                
-                #request the cloud with the original parameters
-                url = "http://" + CLOUD_IP + ":" + str(CLOUD_PORT)
-                parameters["latitude"] = lat
-                parameters["longitude"] = long
-                parameters["interval"] = int(parameters["interval"]) - dist
-                r = requests.get(url, parameters)
+                    #calculate itineraries from parameters
+                    if (parameters["trans"] == "0"):
+                        json_res = find_itineraries(node_index, int(parameters["interval"]) - dist, g_walking, landmarks, dist, "walking", parameters["latitude"] , parameters["longitude"])
+                    else:
+                        json_res = find_itineraries(node_index, int(parameters["interval"]) - dist, g_driving, landmarks, dist, "driving", parameters["latitude"] , parameters["longitude"])
+                    
+                    #trasform into http response
+                    response = make_http_response(200, parameters["version"], json_res)
+                    
+                    print("Client(%s:%s) sent : %s"%(self.ip, str(self.port), parameters))
 
-                #send response
-                response = make_http_response(200, version, r.text)                
-                self.csocket.send(response.encode("utf-8"))
+                    #send response
+                    self.csocket.send(response.encode("utf-8"))
+                else:
+                    #Send to cloud
+                    print("Sent request to Cloud")
+
+                    #pop version from parameters
+                    version = parameters.pop('version', None)
+                    
+                    #request the cloud with the original parameters
+                    url = "http://" + CLOUD_IP + ":" + str(CLOUD_PORT)
+                    parameters["latitude"] = lat
+                    parameters["longitude"] = long
+                    parameters["interval"] = round(int(parameters["interval"]) - dist)
+                    r = requests.get(url, parameters)
+
+                    #send response
+                    response = make_http_response(200, version, r.text)                
+                    self.csocket.send(response.encode("utf-8"))
                 
 
 

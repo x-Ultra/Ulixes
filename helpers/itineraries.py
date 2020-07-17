@@ -7,7 +7,6 @@ import datetime
 
 USE_GOOGLE = False
 
-
 # formula used to calculate the distance in km between 2 points
 # in the globe, given their latitude and longitude
 def haversine(lon1, lat1, lon2, lat2):
@@ -81,7 +80,7 @@ def get_player_node(lat, long, landmarks, transport):
 
         return closest[i][0], min_dist, closest[i][2], closest[i][3]
     else:
-        return closest[0][0], 0, closest[0][2], closest[0][3]
+        return closest[0][0], closest[0][1]*60*60/5, closest[0][2], closest[0][3]
 
 
 # function that given the name of a monument (the same name used to save te monument into DynamoDB),
@@ -92,40 +91,14 @@ def get_image_by_name(imageName):
         pict = base64.b64encode(img_file.read())
     return pict.decode("ascii")
 
-
-# TODO
+#Function that recovers the name of the monument with his id
 def get_monument_name_byID(monumentIndex):
-    monumentName = "Colosseo"
-    return monumentName
+    monumentIndex = int(monumentIndex)
+    for k, v in landmarks_info.items():
+        if v[0] == monumentIndex:
+            return k
 
-
-# TODO
-def get_monument_url_byName(monName):
-    monUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/20160806-DSCF1573-BalTone.jpg/260px-20160806-DSCF1573-BalTone.jpg"
-    return monUrl
-
-
-# TODO
-def get_coordinates_byName(monName):
-    coords = "lat2, lon2"
-    return coords
-
-
-# TODO
-def get_seconds_to_next_monument(id1, id2):
-    # retrieve seconds to go from node with index id1
-    # to node with index id2
-    return 1000
-
-
-# TODO
-def seconds_from_user_tofirstnode(userLat, userLon, id1):
-    # retrieve seconds to go from the user position
-    # to the node with index id1
-    return 1000
-
-
-def build_json_itineraries(solutions, transp, userLat, userLon, t):
+def build_json_itineraries(solutions, transp,userLat, userLon, t, graph, dist):
     # @ solutions: list of tuples containing an integer and a list of integers (the node indexes)
     #               [(12, [1,2,3,4]), (1, [1,2])]
 
@@ -145,10 +118,10 @@ def build_json_itineraries(solutions, transp, userLat, userLon, t):
             monument = {}
             monName = get_monument_name_byID(monumentIndex)
             monument["Name"] = monName
-            monumentImageUrl = get_monument_url_byName(monName)
+            monumentImageUrl = landmarks_info[monName][3]
             image = pictureManager.Image(monName, monumentImageUrl)
             monument["Picture"] = pictureManager.getBase64Picture(image)
-            monument["Coordinates"] = get_coordinates_byName(monName)
+            monument["Coordinates"] = landmarks_info[monName][1] + ", " + landmarks_info[monName][2]
             monuments.append(monument)
 
 
@@ -162,12 +135,12 @@ def build_json_itineraries(solutions, transp, userLat, userLon, t):
             if position != 1:
                 id1 = itinerary[position - 2]
                 id2 = itinerary[position - 1]
-                secondsToNext = get_seconds_to_next_monument(id1, id2)
+                secondsToNext = graph.get_distance(id1, id2)
                 arrTime = now + datetime.timedelta(seconds=secondsToNext)
                 itinMonument["ExpectedArrTime"] = arrTime.strftime('%H:%M')
             else:
                 id1 = itinerary[position - 1]
-                sec = seconds_from_user_tofirstnode(userLat, userLon, id1)
+                sec = int(dist)
                 arrTime = now + datetime.timedelta(seconds=sec)
                 itinMonument["ExpectedArrTime"] = arrTime.strftime('%H:%M')
 
@@ -187,15 +160,20 @@ def build_json_itineraries(solutions, transp, userLat, userLon, t):
     return json.dumps(itineraryList)
 
 
-def find_itineraries(location, interval, graph):
+def find_itineraries(location, interval, graph, landmarks, dist, transp, lat, lon):
     # @ location: integer rapresenting the starting node
     # @ interval: integer representing the amount of time of the visit
     # @ graph: the graph
 
     # @ return: a json file containg all the avaible itineraries
 
-    # TODO replace all here down with:
-    #           'return build_json_itineraries(solutions, transp, userLat, userLon, t)'
+    global landmarks_info 
+    landmarks_info = landmarks
+
+    solutions = graph.find_best_path(location, interval)
+    
+    return build_json_itineraries(solutions, transp,lat, lon, interval, graph, dist)
+
 
     # pass parameters to algorithm
     colosseoPict = get_image_by_name("colosseo.jpeg")

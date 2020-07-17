@@ -3,7 +3,7 @@ import csv
 import urllib.request
 import functools
 
-IMAGES_PATH = "."
+IMAGES_PATH = "./images"
 MAX_SEC_IN_CACHE = 3600
 MAX_CACHE_SIZE = 20
 
@@ -59,7 +59,7 @@ def getBase64Picture(imageClass):
     downloadPicture(imageClass)
 
     # apri il file e crea la sua codifica base64
-    img = open(imageClass.get_name(), "rb")
+    img = open(IMAGES_PATH + "/" + imageClass.get_name(), "rb")
     base64pict = base64.b64encode(img.read()).decode("utf-8")
 
     return base64pict
