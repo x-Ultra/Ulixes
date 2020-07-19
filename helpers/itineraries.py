@@ -4,8 +4,9 @@ from math import radians, cos, sin, asin, sqrt
 import googlemaps
 from images import pictureManager
 import datetime
+from helpers.configManager import get
 
-USE_GOOGLE = False
+USE_GOOGLE = get("USE_GOOGLE") == "True"
 
 # formula used to calculate the distance in km between 2 points
 # in the globe, given their latitude and longitude

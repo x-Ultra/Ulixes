@@ -1,8 +1,9 @@
 import boto3
 from boto3.dynamodb.conditions import Key
+from helpers.configManager import get
 
-USE_DINAMODB_LAND = False
-USE_DINAMODB_DIST = False
+USE_DINAMODB_LAND = get("USE_DINAMODB_LAND") == "True"
+USE_DINAMODB_DIST = get("USE_DINAMODB_DIST") == "True"
 
 def get_landmarks(table, fog_id=None):
 

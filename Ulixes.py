@@ -1,15 +1,14 @@
 import socket, threading
-
 from helpers.itineraries import find_itineraries, get_player_node
 from helpers.parser import make_http_response, parse_http_request
 from helpers.graphManager import Graph
 from helpers.dbManager import recover_landmarks, recover_distances
+from helpers.configManager import get
 import googlemaps
 from urllib import parse
 import random
 
-host = "0.0.0.0"
-port = 5005
+port = int(get("CLOUD_PORT"))
 
 class ClientThread(threading.Thread):
 
@@ -21,7 +20,7 @@ class ClientThread(threading.Thread):
         print("[+] New thread started for "+ip+":"+str(port))
 
     def run(self):
-        print("Connection from : "+ip+":"+str(port))
+        print("Connection from : "+ip)
 
         #clientsock.send(bytes("Welcome to the server\n", "UTF-8"))
 
@@ -113,6 +112,7 @@ print("Graph for driving built")
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
+host = "0.0.0.0"
 tcpsock.bind((host,port))
 
 while True:

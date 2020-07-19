@@ -4,27 +4,23 @@ from helpers.parser import make_http_response, parse_http_request
 from helpers.graphManager import Graph
 from helpers.dbManager import recover_landmarks, recover_distances
 from heartbeat.heartbeat import join_bootstrap
+from helpers.configManager import get
 from urllib import parse
 import requests
 import random
 
 #Cloud ip and port
-CLOUD_IP = "127.0.0.1"
-CLOUD_PORT = 5005  
+CLOUD_IP = get("CLOUD_IP")
+CLOUD_PORT = int(get("CLOUD_PORT")) 
 
 #ID of the fog node
 FOG_ID = 1
 
-#DEBUG, 1 to send all requests to cloud
-#       0 to handle all requests locally
-ASK_CLOUD = 0
-
-host = "0.0.0.0"
-port = 8888
+port = int(get("FOG_PORT"))
    
 MY_IP = "172.74.2.203"
-BOOTSTRAP_IP = "172.74.3.189"
-ACCEPT_LIST_PORT = 11111
+BOOTSTRAP_IP = get("BOOTSTRAP_IP")
+ACCEPT_LIST_PORT = int(get("BOOTSTRAP_PORT"))
 
 def bootstrap():
     join_bootstrap(25, MY_IP, "1214.234", "1114.243", BOOTSTRAP_IP, ACCEPT_LIST_PORT,
@@ -59,8 +55,17 @@ class ClientThread(threading.Thread):
         else:
             node_index, dist, lat, long = get_player_node(parameters["latitude"] , parameters["longitude"], landmarks, parameters["trans"])
             
+            print(node_index, dist)
             if int(parameters["interval"]) - dist < 0:
                 json_res = "{}"
+
+                #trasform into http response
+                response = make_http_response(200, parameters["version"], json_res)
+                
+                print("Client(%s:%s) sent : %s"%(self.ip, str(self.port), parameters))
+
+                #send response
+                self.csocket.send(response.encode("utf-8"))
             else:
                 if (parameters["trans"] == "0"):
                     check = g_walking.check_index(node_index) and infinite_distances_walking[node_index] > int(parameters["interval"])
@@ -174,6 +179,7 @@ print("Connected to bootstrap")
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
+host = "0.0.0.0"
 tcpsock.bind((host,port))
 
 while True:
