@@ -1,9 +1,12 @@
 import boto3
 from decimal import *
 from time import sleep
+from helpers.configManager import cred_get
 
 # Set up dinamodb client with boto3
-client = boto3.client('dynamodb', region_name='eu-central-1')
+client = boto3.client('dynamodb', region_name='eu-central-1', 
+    aws_access_key_id=cred_get("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=cred_get("AWS_SECRET_ACCESS_KEY"))
 
 #### Create Landmarks table #######
 
@@ -50,11 +53,13 @@ sleep(5)
 getcontext().prec = 6
 
 #Set up boto3
-dynamodb = boto3.resource('dynamodb', region_name='eu-central-1')
+dynamodb = boto3.resource('dynamodb', region_name='eu-central-1', 
+    aws_access_key_id=cred_get("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=cred_get("AWS_SECRET_ACCESS_KEY"))
 table = dynamodb.Table('Landmarks')
 
 #Recover landmarks
-fd = open("fullMonumentInfo.csv", "r")
+fd = open("landmarksComplete.csv", "r")
 
 lines = fd.readlines()
 
@@ -62,7 +67,7 @@ lines = fd.readlines()
 with table.batch_writer() as batch:
     for i in range(1, len(lines)):
         splitted = lines[i].strip().split(", ")
-        batch.put_item(Item={"Name": splitted[0], "ID": int(i-1), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]), "Fog1": Decimal(splitted[3]), "Fog2" : Decimal(splitted[4]), "PictureUrl" : splitted[5], "Description": splitted[7]})
+        batch.put_item(Item={"Name": splitted[0], "ID": int(i-1), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]), "Fog1": Decimal(splitted[3]), "Fog2" : Decimal(splitted[4]), "PictureUrl" : splitted[5], "Description": splitted[6]})
         #print({"Name": splitted[0], "ID": int(i), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]) })
 
 print("Landamrks are online!")
@@ -70,8 +75,9 @@ print("Landamrks are online!")
 ######################################
 
 # Set up dinamodb client with boto3
-client = boto3.client('dynamodb', region_name='eu-central-1')
-
+client = boto3.client('dynamodb', region_name='eu-central-1', 
+    aws_access_key_id=cred_get("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=cred_get("AWS_SECRET_ACCESS_KEY"))
 #### Create Distances table #######
 
 try:
@@ -104,8 +110,8 @@ try:
 
         # Rate of access
         ProvisionedThroughput={
-            "ReadCapacityUnits": 10,
-            "WriteCapacityUnits": 10
+            "ReadCapacityUnits": 30,
+            "WriteCapacityUnits": 30
         }
     )
     print("Disntaces table created successfully!")
@@ -125,7 +131,9 @@ sleep(5)
 getcontext().prec = 6
 
 #Set up boto3
-dynamodb = boto3.resource('dynamodb', region_name='eu-central-1')
+dynamodb = boto3.resource('dynamodb', region_name='eu-central-1', 
+    aws_access_key_id=cred_get("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=cred_get("AWS_SECRET_ACCESS_KEY"))
 table = dynamodb.Table('Distances')
 
 #Recover landmarks
@@ -137,7 +145,7 @@ lines = fd.readlines()
 with table.batch_writer() as batch:
     for i in range(1, len(lines)):
         splitted = lines[i].strip().split(", ")
-        batch.put_item(Item={"Start": splitted[0], "End": splitted[1], "Seconds": int(splitted[2]), "Transports": splitted[3], "Fog1": Decimal(splitted[4]), "Fog2" : Decimal(splitted[5])})
+        batch.put_item(Item={"Start": splitted[0], "End": splitted[1], "Seconds": int(splitted[2]), "Transport": splitted[3], "Fog1": Decimal(splitted[4]), "Fog2" : Decimal(splitted[5])})
         #print({"Name": splitted[0], "ID": int(i), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]) })
         if (i%100 == 0):
             print(i, " items inserted!")

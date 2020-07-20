@@ -1,6 +1,7 @@
 import boto3
 from boto3.dynamodb.conditions import Key
 from helpers.configManager import get
+from helpers.configManager import cred_get
 
 USE_DINAMODB_LAND = get("USE_DINAMODB_LAND") == "True"
 USE_DINAMODB_DIST = get("USE_DINAMODB_DIST") == "True"
@@ -11,16 +12,18 @@ def get_landmarks(table, fog_id=None):
 	#@ return: list of items corressponding to the fog id or all the items
 
 	#Set up boto3
-	dynamodb = boto3.resource('dynamodb', region_name='eu-central-1')
+	dynamodb = boto3.resource('dynamodb', region_name='eu-central-1', 
+    aws_access_key_id=cred_get("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=cred_get("AWS_SECRET_ACCESS_KEY"))
 	table = dynamodb.Table("Landmarks")
 
 	if (fog_id == None):
 		# recover all items
-		resp = table.scan(ProjectionExpression = '#n, ID, Lat, #l',
+		resp = table.scan(ProjectionExpression = '#n, ID, Lat, #l, Description, PictureUrl',
                   ExpressionAttributeNames = {'#n': 'Name', '#l' : 'Long'})
 	else:
 		#Recover items corrisponding to a specific fog_id
-		resp = table.scan(ProjectionExpression = '#n, ID, Lat, #l',
+		resp = table.scan(ProjectionExpression = '#n, ID, Lat, #l, Description, PictureUrl',
                   ExpressionAttributeNames = {'#n': 'Name', '#l' : 'Long'},
                   ExpressionAttributeValues= {
 			        ":FogId": 1,
@@ -35,16 +38,18 @@ def get_distances(fog_id=None):
 	#@ return: list of items corressponding to the fog id or all the items
 
 	#Set up boto3
-	dynamodb = boto3.resource('dynamodb', region_name='eu-central-1')
+	dynamodb = boto3.resource('dynamodb', region_name='eu-central-1', 
+    aws_access_key_id=cred_get("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=cred_get("AWS_SECRET_ACCESS_KEY"))
 	table = dynamodb.Table("Distances")
 
 	if (fog_id == None):
 		# recover all items
-		resp = table.scan(ProjectionExpression = '#s, #e, Seconds, Transports',
+		resp = table.scan(ProjectionExpression = '#s, #e, Seconds, Transport',
                   ExpressionAttributeNames = {'#s': 'Start', '#e' : 'End'})
 	else:
 		#Recover items corrisponding to a specific fog_id
-		resp = table.scan(ProjectionExpression = '#s, #e, Seconds, Transports',
+		resp = table.scan(ProjectionExpression = '#s, #e, Seconds, Transport',
                   ExpressionAttributeNames = {'#s': 'Start', '#e' : 'End'},
                   ExpressionAttributeValues= {
 			        ":FogId": 1,
@@ -87,7 +92,7 @@ def recover_landmarks(fog_id=None):
 		for item in items:
 			#print(item)
 			#print(item["Name"])
-			res[item["Name"]] = (int(item["ID"]), float(item["Lat"]) , float(item["Long"]))
+			res[item["Name"]] = (int(item["ID"]), float(item["Lat"]) , float(item["Long"]), item["PictureUrl"], item["Description"])
 	else:
 		fd = open("landmarksComplete.csv", "r")
 

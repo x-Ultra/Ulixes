@@ -1,6 +1,6 @@
 {
-	"USE_DINAMODB_LAND" : "False",
-	"USE_DINAMODB_DIST" : "False",
+	"USE_DINAMODB_LAND" : "True",
+	"USE_DINAMODB_DIST" : "True",
 	"USE_GOOGLE" : "False",
 
 	"CLUSTER_ENDPOINT" :"testmemcached.nryvye.cfg.euc1.cache.amazonaws.com",

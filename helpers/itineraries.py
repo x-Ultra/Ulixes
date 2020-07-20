@@ -122,7 +122,7 @@ def build_json_itineraries(solutions, transp,userLat, userLon, t, graph, dist):
             monumentImageUrl = landmarks_info[monName][3]
             image = pictureManager.Image(monName, monumentImageUrl)
             monument["Picture"] = pictureManager.getBase64Picture(image)
-            monument["Coordinates"] = landmarks_info[monName][1] + ", " + landmarks_info[monName][2]
+            monument["Coordinates"] = str(landmarks_info[monName][1]) + ", " + str(landmarks_info[monName][2])
             monuments.append(monument)
 
 
