@@ -1,0 +1,9 @@
+[Unit]
+Description=Simple systemd service for FlaskPlot.
+
+[Service]Type=simple
+WorkingDirectory=/home/ec2-user/Ulixes
+ExecStart=/usr/bin/python3 /home/ec2-user/Ulixes/Hermes.py
+
+[Install]
+WantedBy=multi-user.target

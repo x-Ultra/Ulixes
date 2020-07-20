@@ -1,79 +1,157 @@
 ---
   - name: Creating Infrastructure
     hosts: localhost
-
     vars:
-      memcached_port: 11211
-      beat_port: 99999
-      bootstrap_port: 11111
-      frankfurt: eu-central-1
+      constants:
+        memcached_port: 11211
+        beat_port: 9999
+        bootstrap_port: 11111
+        frankfurt: eu-central-1
+        milano: eu-south-1
+        server_ami: ami-05ca073a83ad2f28c
+        key_name: KeyPairF
+        key_name_m: KeyPair
 
     tasks:
-      - name: Creating VPC
+
+      - name: Creating VPC in Frankfurt
         ec2_vpc_net:
-          name: Application_VPC
+          name: Application_VPC_f
           cidr_block: 10.10.0.0/16
           region: "{{ constants.frankfurt }}"
           tenancy: default
           state: present
-        register: vpc
+        register: vpc_f
+
+      - name: Creating VPC in Milano!
+        ec2_vpc_net:
+          name: Application_VPC_m
+          cidr_block: 10.10.0.0/16
+          region: "{{ constants.milano }}"
+          tenancy: default
+          state: present
+        register: vpc_m
+
       # Accedere all'id del gateway con {{igw.gateway_id}}
-      - ec2_vpc_igw:
-          vpc_id: vpc.id
+      - name: Creating gateway in Frankfurt
+        ec2_vpc_igw:
+          vpc_id: "{{ vpc_f.vpc.id }}"
           state: present
           region: "{{ constants.frankfurt }}"
-        register: igw      
+        register: igw_f
+
+      - name: Creating gateway in Milano
+        ec2_vpc_igw:
+          vpc_id: "{{ vpc_m.vpc.id }}"
+          state: present
+          region: "{{ constants.milano }}"
+        register: igw_m    
 
       # creo 3 subnet, una per ogni regione
-      - name: Create subnet a
+      - name: Create subnet a (Frankfurt)
         ec2_vpc_subnet:
+          region: "{{ constants.frankfurt }}"
           state: present
-          vpc_id: vpc.id
+          vpc_id: "{{ vpc_f.vpc.id }}"
           cidr: 10.10.1.0/24
+          az: "{{ constants.frankfurt }}a"
           tags:
             Name: Subnet A
         register: subnet_a      
 
-      - name: Create subnet b
+      - name: Create subnet b (Frankfurt)
         ec2_vpc_subnet:
+          region: "{{ constants.frankfurt }}"
           state: present
-          vpc_id: vpc.id
+          vpc_id: "{{ vpc_f.vpc.id }}"
+          az: "{{ constants.frankfurt }}b"
           cidr: 10.10.2.0/24
           tags:
             Name: Subnet B
         register: subnet_b      
 
-      - name: Create subnet c
+      - name: Create subnet c (Frankfurt)
         ec2_vpc_subnet:
+          region: "{{ constants.frankfurt }}"
           state: present
-          vpc_id: vpc.id
-          cidr: 10.10.1.0/24
+          vpc_id: "{{ vpc_f.vpc.id }}"
+          cidr: 10.10.3.0/24
+          az: "{{ constants.frankfurt }}c"
           tags:
             Name: Subnet C
-        register: subnet_c      
+        register: subnet_c
+
+      # creo 3 subnet, una per ogni regione milano
+      - name: Create subnet a (Milano)
+        ec2_vpc_subnet:
+          region: "{{ constants.milano }}"
+          state: present
+          vpc_id: "{{ vpc_m.vpc.id }}"
+          cidr: 10.10.1.0/24
+          az: "{{ constants.milano }}a"
+          tags:
+            Name: Subnet A
+        register: subnet_a_m  
+
+      - name: Create subnet b (Milano)
+        ec2_vpc_subnet:
+          region: "{{ constants.milano }}"
+          state: present
+          vpc_id: "{{ vpc_m.vpc.id }}"
+          az: "{{ constants.milano }}b"
+          cidr: 10.10.2.0/24
+          tags:
+            Name: Subnet B
+        register: subnet_b_m      
+
+      - name: Create subnet c (Milano)
+        ec2_vpc_subnet:
+          region: "{{ constants.milano }}"
+          state: present
+          vpc_id: "{{ vpc_m.vpc.id }}"
+          cidr: 10.10.3.0/24
+          az: "{{ constants.milano }}c"
+          tags:
+            Name: Subnet C
+        register: subnet_c_m
 
       # Creazione Route table con le subnets create sopra
-      - name: Creating the route table
+      - name: Creating the route table (Frankfurt)
         ec2_vpc_route_table:
-          vpc_id: vpc.id
+          vpc_id: "{{ vpc_f.vpc.id }}"
           region: "{{ constants.frankfurt }}"
           subnets:
-            - "{{ subnet_a.id }}"
-            - "{{ subnet_b.id }}"
-            - "{{ subnet_c.id }}"
+            - "{{ subnet_a.subnet.id }}"
+            - "{{ subnet_b.subnet.id }}"
+            - "{{ subnet_c.subnet.id }}"
           routes:
             - dest: 0.0.0.0/0
-              gateway_id: "{{ igw.gateway_id }}"
+              gateway_id: "{{ igw_f.gateway_id }}"
           state: present
-        register: route_table      
+        register: route_table
+
+      # Creazione Route table con le subnets create sopra
+      - name: Creating the route table (Milano)
+        ec2_vpc_route_table:
+          vpc_id: "{{ vpc_m.vpc.id }}"
+          region: "{{ constants.milano }}"
+          subnets:
+            - "{{ subnet_a_m.subnet.id }}"
+            - "{{ subnet_b_m.subnet.id }}"
+            - "{{ subnet_c_m.subnet.id }}"
+          routes:
+            - dest: 0.0.0.0/0
+              gateway_id: "{{ igw_m.gateway_id }}"
+          state: present
+        register: route_table_m     
 
       #Secutiry groups
-      - name: Creating security groups for Ulixes
+      - name: Creating security groups for Load Balancer
         ec2_group:
           state: present
-          name: SG Ulixes
-          description: Inbound roules for Ulixes servers
-          vpc_id: vpc.id
+          name: SG LoadBalanced
+          description: Inbound roules for Load Balancer
+          vpc_id: "{{ vpc_f.vpc.id }}"
           region: "{{ constants.frankfurt }}"
           rules:
             - proto: tcp
@@ -81,6 +159,20 @@
               - 80
               cidr_ip: 0.0.0.0/0
               rule_desc: allow all on port 80
+        register: sg_LoadBalancer    
+
+      - name: Creating security groups for Ulixes
+        ec2_group:
+          state: present
+          name: SG Ulixes
+          description: Inbound roules for Ulixes servers
+          vpc_id: "{{ vpc_f.vpc.id }}"
+          region: "{{ constants.frankfurt }}"
+          rules:
+            - proto: tcp
+              from_port: 80
+              to_port: 80
+              group_id: "{{ sg_LoadBalancer.group_id }}"
             - proto: tcp
               ports:
               - "{{ constants.memcached_port }}"
@@ -93,8 +185,8 @@
           state: present
           name: SG Hermes
           description: Inbound roules for Hermes servers
-          vpc_id: vpc.id
-          region: "{{ constants.frankfurt }}"
+          vpc_id: "{{ vpc_f.vpc.id }}"
+          region: "{{ constants.milano }}"
           rules:
             - proto: tcp
               ports:
@@ -110,14 +202,15 @@
               ports:
               - "{{ constants.bootstrap_port }}"
               cidr_ip: 0.0.0.0/0
-              rule_desc: allow all on bootstrap port      
+              rule_desc: allow all on bootstrap port
+        register: sg_hermes     
 
       - name: Creating security groups for Pythia
         ec2_group:
           state: present
           name: SG Pythia
           description: Inbound roules for Pythia servers
-          vpc_id: vpc.id
+          vpc_id: "{{ vpc_f.vpc.id }}"
           region: "{{ constants.frankfurt }}"
           rules:
             - proto: tcp
@@ -129,18 +222,292 @@
               ports:
               - "{{ constants.bootstrap_port }}"
               cidr_ip: 0.0.0.0/0
-              rule_desc: allow all on bootstrap port      
+              rule_desc: allow all on bootstrap port  
+        register: sg_pythia    
 
       - name: Creating security groups for Memcached
         ec2_group:
           state: present
           name: SG Memcached
           description: Inbound roules for Memcached servers
-          vpc_id: vpc.id
+          vpc_id: "{{ vpc_f.vpc.id }}"
           region: "{{ constants.frankfurt }}"
           rules:
             - proto: tcp
               ports:
               - "{{ constants.memcached_port }}"
-              group_id: sg_ulixes.group_id
+              group_id: "{{ sg_ulixes.group_id }}"
               rule_desc: allow all on beat port
+        register: sg_memcached
+
+      #Secutiry groups (milano)
+      - name: Creating security groups for Hermes (Milano)
+        ec2_group:
+          state: present
+          name: SG Hermes
+          description: Inbound roules for Hermes servers
+          vpc_id: "{{ vpc_m.vpc.id }}"
+          region: "{{ constants.milano }}"
+          rules:
+            - proto: tcp
+              ports:
+              - 80
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow all on port 80
+            - proto: tcp
+              ports:
+              - "{{ constants.beat_port }}"
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow all on beat port
+            - proto: tcp
+              ports:
+              - "{{ constants.bootstrap_port }}"
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow all on bootstrap port
+        register: sg_hermes
+
+      # Load Balancer
+      - local_action:
+          module: ec2_elb_lb
+          name: "Load-Balancer-Ulixes"
+          state: present
+          region: "{{ constants.frankfurt }}"
+          subnets:
+            - "{{ subnet_a.subnet.id }}"
+            - "{{ subnet_b.subnet.id }}"
+            - "{{ subnet_c.subnet.id }}"
+          listeners:
+            - protocol: http # options are http, https, ssl, tcp
+              load_balancer_port: 80
+              instance_port: 80
+          health_check:
+            ping_protocol: http # options are http, https, ssl, tcp
+            ping_port: 80
+            ping_path: "/" # not required for tcp or ssl
+            response_timeout: 5 # seconds
+            interval: 30 # seconds
+            unhealthy_threshold: 2
+            healthy_threshold: 10
+
+      # Creating EC2 instances for Ulixes
+      - name: Creating EC2 instace of Ulixes server on subnet a
+        ec2:
+          state: present
+          tenancy: default
+          assign_public_ip: yes
+          instance_type: t2.micro
+          group_id: "{{ sg_ulixes.group_id }}"
+          image: "{{ constants.server_ami }}"
+          instance_tags:
+            server: ulixes
+          key_name: "{{ constants.key_name }}"
+          region: "{{ constants.frankfurt }}"
+          vpc_subnet_id: "{{ subnet_a.subnet.id }}"
+          count: 1
+          wait: yes
+          wait_timeout: 320
+        register: ulixes1
+
+      - name: Creating EC2 instace of Ulixes server on subnet b
+        ec2:
+          state: present
+          tenancy: default
+          assign_public_ip: yes
+          instance_type: t2.micro
+          group_id: "{{ sg_ulixes.group_id }}"
+          image: "{{ constants.server_ami }}"
+          instance_tags:
+            server: ulixes
+          key_name: "{{ constants.key_name }}"
+          region: "{{ constants.frankfurt }}"
+          vpc_subnet_id: "{{ subnet_b.subnet.id }}"
+          count: 1
+          wait: yes
+          wait_timeout: 320
+        register: ulixes2
+
+      - name: Creating EC2 instace of Ulixes server on subnet c
+        ec2:
+          state: present
+          tenancy: default
+          assign_public_ip: yes
+          instance_type: t2.micro
+          group_id: "{{ sg_ulixes.group_id }}"
+          image: "{{ constants.server_ami }}"
+          instance_tags:
+            server: ulixes
+          key_name: "{{ constants.key_name }}"
+          region: "{{ constants.frankfurt }}"
+          vpc_subnet_id: "{{ subnet_c.subnet.id }}"
+          count: 1
+          wait: yes
+          wait_timeout: 320
+        register: ulixes3
+
+      # EC2 instances for Pythia
+      - name: Creating EC2 instance of Pythia server on subnet a
+        ec2:
+          state: present
+          tenancy: default
+          assign_public_ip: yes
+          instance_type: t2.micro
+          group_id: "{{ sg_pythia.group_id }}"
+          image: "{{ constants.server_ami }}"
+          instance_tags:
+            server: pythia
+          key_name: "{{ constants.key_name }}"
+          region: "{{ constants.frankfurt }}"
+          vpc_subnet_id: "{{ subnet_a.subnet.id }}"
+          count: 1
+          wait: yes
+          wait_timeout: 320
+        register: pythia1
+
+      - name: Creating EC2 instance of Pythia server on subnet b
+        ec2:
+          state: present
+          tenancy: default
+          assign_public_ip: yes
+          instance_type: t2.micro
+          group_id: "{{ sg_pythia.group_id }}"
+          image: "{{ constants.server_ami }}"
+          instance_tags:
+            server: pythia
+          key_name: "{{ constants.key_name }}"
+          region: "{{ constants.frankfurt }}"
+          vpc_subnet_id: "{{ subnet_b.subnet.id }}"
+          count: 1
+          wait: yes
+          wait_timeout: 320
+        register: pythia2
+
+      # EC2 instances for Hermes
+      - name: Creating EC2 instance of Hermes server on subnet a
+        ec2:
+          state: present
+          tenancy: default
+          assign_public_ip: yes
+          instance_type: t2.micro
+          group_id: "{{ sg_hermes.group_id }}"
+          image: "{{ constants.server_ami }}"
+          instance_tags:
+            server: hermes
+          key_name: "{{ constants.key_name_m }}"
+          region: "{{ constants.milano }}"
+          vpc_subnet_id: "{{ subnet_a_m.subnet.id }}"
+          count: 1
+          wait: yes
+          wait_timeout: 320
+        register: hermes1
+
+      - name: Creating EC2 instance of Hermes server on subnet b
+        ec2:
+          state: present
+          tenancy: default
+          assign_public_ip: yes
+          instance_type: t2.micro
+          group_id: "{{ sg_hermes.group_id }}"
+          image: "{{ constants.server_ami }}"
+          instance_tags:
+            server: hermes
+          key_name: "{{ constants.key_name_m }}"
+          region: "{{ constants.milano }}"
+          vpc_subnet_id: "{{ subnet_b_m.subnet.id }}"
+          count: 1
+          wait: yes
+          wait_timeout: 320
+        register: hermes2
+        #IP: hermes2.instances.network_interfaces.association.public_ip
+
+      # Memcached
+      - elasticache:
+          name: Memcached
+          state: present
+          engine: memcached
+          cache_engine_version: 5.0.6
+          node_type: cache.t2.small
+          num_nodes: 3
+          wait: yes
+          cache_port: "{{constants.memcached_port}}"
+          cache_security_groups: "{{sg_memcached.group_id}}"
+          zone: "{{constants.frankfurt}}"
+    
+      - name: paperino
+        elasticache_info:
+        register: memcached
+        #IP: memcached.elasticache_clusters.cache_nodes.endpoint.address
+
+      # Generate domains
+      - name: Creating a public hosting zone
+        route53_zone:
+          zone: resvag.com
+          comment: The zone for all our domains
+
+      - route53:
+          state: present
+          zone: resvag.com
+          record: ulixes.resvag.com
+          type: A
+          region: "{{ constants.frankfurt }}"
+          value: 
+            - "{{ulixes1.instances.network_interfaces.association.public_ip}}"
+            - "{{ulixes2.instances.network_interfaces.association.public_ip}}"
+            - "{{ulixes3.instances.network_interfaces.association.public_ip}}"
+          # Routing policy
+          identifier: "ulixes@resvag"
+
+      - route53:
+          state: present
+          zone: resvag.com
+          record: pythia.resvag.com
+          type: A
+          region: "{{ constants.frankfurt }}"
+          value: 
+            - "{{pythia1.instances.network_interfaces.association.public_ip}}"
+            - "{{pythia2.instances.network_interfaces.association.public_ip}}"
+          # Routing policy
+          identifier: "pythia@resvag"
+      - route53:
+          state: present
+          zone: resvag.com
+          record: memcached.resvag.com
+          type: A
+          region: "{{ constants.frankfurt }}"
+          value: 
+            - "{{memcached.elasticache_clusters.cache_nodes.endpoint.address}}"
+          # Routing policy
+          identifier: "memcached@resvag"
+
+      # Cloud Front
+      - cloudfront_distribution:
+          state: present
+          caller_reference: cloudfront resvag
+          origins:
+              - id: 'load balancer ulixes'
+                domain_name: ulixes.resvag.com
+                origin_path: /
+          default_cache_behavior:
+            target_origin_id: 'load balancer ulixes'
+            forwarded_values:
+              query_string: false
+              cookies:
+                forward: none
+              headers:
+               - '*'
+            viewer_protocol_policy: allow-all
+            smooth_streaming: true
+            compress: true
+            allowed_methods:
+              items:
+                - GET
+                - HEAD
+              cached_methods:
+                - GET
+                - HEAD
+          comment: this is a cloudfront distribution for ulixes
+
+      # Volumes Ids
+      - name: Writing on files volumes IDs
+        local_action: copy content={{ ulixes1.instances.block_device_mappings.ebs.volume_id }} dest=./ulixes
+        local_action: copy content={{ hermes1.instances.block_device_mappings.ebs.volume_id }} dest=./hermes
+        local_action: copy content={{ pythia1.instances.block_device_mappings.ebs.volume_id }} dest=./pythia
