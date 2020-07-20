@@ -1,0 +1,146 @@
+---
+  - name: Creating Infrastructure
+    hosts: localhost
+
+    vars:
+      memcached_port: 11211
+      beat_port: 99999
+      bootstrap_port: 11111
+      frankfurt: eu-central-1
+
+    tasks:
+      - name: Creating VPC
+        ec2_vpc_net:
+          name: Application_VPC
+          cidr_block: 10.10.0.0/16
+          region: "{{ constants.frankfurt }}"
+          tenancy: default
+          state: present
+        register: vpc
+      # Accedere all'id del gateway con {{igw.gateway_id}}
+      - ec2_vpc_igw:
+          vpc_id: vpc.id
+          state: present
+          region: "{{ constants.frankfurt }}"
+        register: igw      
+
+      # creo 3 subnet, una per ogni regione
+      - name: Create subnet a
+        ec2_vpc_subnet:
+          state: present
+          vpc_id: vpc.id
+          cidr: 10.10.1.0/24
+          tags:
+            Name: Subnet A
+        register: subnet_a      
+
+      - name: Create subnet b
+        ec2_vpc_subnet:
+          state: present
+          vpc_id: vpc.id
+          cidr: 10.10.2.0/24
+          tags:
+            Name: Subnet B
+        register: subnet_b      
+
+      - name: Create subnet c
+        ec2_vpc_subnet:
+          state: present
+          vpc_id: vpc.id
+          cidr: 10.10.1.0/24
+          tags:
+            Name: Subnet C
+        register: subnet_c      
+
+      # Creazione Route table con le subnets create sopra
+      - name: Creating the route table
+        ec2_vpc_route_table:
+          vpc_id: vpc.id
+          region: "{{ constants.frankfurt }}"
+          subnets:
+            - "{{ subnet_a.id }}"
+            - "{{ subnet_b.id }}"
+            - "{{ subnet_c.id }}"
+          routes:
+            - dest: 0.0.0.0/0
+              gateway_id: "{{ igw.gateway_id }}"
+          state: present
+        register: route_table      
+
+      #Secutiry groups
+      - name: Creating security groups for Ulixes
+        ec2_group:
+          state: present
+          name: SG Ulixes
+          description: Inbound roules for Ulixes servers
+          vpc_id: vpc.id
+          region: "{{ constants.frankfurt }}"
+          rules:
+            - proto: tcp
+              ports:
+              - 80
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow all on port 80
+            - proto: tcp
+              ports:
+              - "{{ constants.memcached_port }}"
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow all on memcached port
+        register: sg_ulixes      
+
+      - name: Creating security groups for Hermes
+        ec2_group:
+          state: present
+          name: SG Hermes
+          description: Inbound roules for Hermes servers
+          vpc_id: vpc.id
+          region: "{{ constants.frankfurt }}"
+          rules:
+            - proto: tcp
+              ports:
+              - 80
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow all on port 80
+            - proto: tcp
+              ports:
+              - "{{ constants.beat_port }}"
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow all on beat port
+            - proto: tcp
+              ports:
+              - "{{ constants.bootstrap_port }}"
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow all on bootstrap port      
+
+      - name: Creating security groups for Pythia
+        ec2_group:
+          state: present
+          name: SG Pythia
+          description: Inbound roules for Pythia servers
+          vpc_id: vpc.id
+          region: "{{ constants.frankfurt }}"
+          rules:
+            - proto: tcp
+              ports:
+              - "{{ constants.beat_port }}"
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow all on beat port
+            - proto: tcp
+              ports:
+              - "{{ constants.bootstrap_port }}"
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow all on bootstrap port      
+
+      - name: Creating security groups for Memcached
+        ec2_group:
+          state: present
+          name: SG Memcached
+          description: Inbound roules for Memcached servers
+          vpc_id: vpc.id
+          region: "{{ constants.frankfurt }}"
+          rules:
+            - proto: tcp
+              ports:
+              - "{{ constants.memcached_port }}"
+              group_id: sg_ulixes.group_id
+              rule_desc: allow all on beat port
