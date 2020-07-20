@@ -2,3 +2,4 @@
 /venv/
 *.conf
 *.json
+full_setup.py
