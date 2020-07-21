@@ -10,8 +10,10 @@
         milano: eu-south-1
         server_ami: ami-05ca073a83ad2f28c
         server_ami_m: ami-0d7f30e679cc03aa8
-        key_name: Test
+        key_name: KeyPairF
         key_name_m: KeyPair
+        ulixes_port: 5005
+        hermes_port: 8888
 
     tasks:
 
@@ -161,9 +163,9 @@
           rules:
             - proto: tcp
               ports:
-              - 80
+              - "{{ constants.ulixes_port }}"
               cidr_ip: 0.0.0.0/0
-              rule_desc: allow all on port 80
+              rule_desc: allow all on port 5005
         register: sg_LoadBalancer    
 
       - name: Creating security groups for Ulixes
@@ -175,8 +177,8 @@
           region: "{{ constants.frankfurt }}"
           rules:
             - proto: tcp
-              from_port: 80
-              to_port: 80
+              from_port: "{{ constants.ulixes_port }}"
+              to_port: "{{ constants.ulixes_port }}"
               group_id: "{{ sg_LoadBalancer.group_id }}"
             - proto: tcp
               ports:
@@ -195,9 +197,9 @@
           rules:
             - proto: tcp
               ports:
-              - 80
+              - "{{ constants.hermes_port }}"
               cidr_ip: 0.0.0.0/0
-              rule_desc: allow all on port 80
+              rule_desc: allow all on port 8888
             - proto: tcp
               ports:
               - "{{ constants.beat_port }}"
@@ -256,9 +258,9 @@
           rules:
             - proto: tcp
               ports:
-              - 80
+              - "{{ constants.hermes_port }}"
               cidr_ip: 0.0.0.0/0
-              rule_desc: allow all on port 80
+              rule_desc: allow all on port 8888
             - proto: tcp
               ports:
               - "{{ constants.beat_port }}"
@@ -283,11 +285,11 @@
             - "{{ subnet_c.subnet.id }}"
           listeners:
             - protocol: http # options are http, https, ssl, tcp
-              load_balancer_port: 80
-              instance_port: 80
+              load_balancer_port: "{{ constants.ulixes_port }}"
+              instance_port: "{{ constants.ulixes_port }}"
           health_check:
             ping_protocol: http # options are http, https, ssl, tcp
-            ping_port: 80
+            ping_port: "{{ constants.ulixes_port }}"
             ping_path: "/" # not required for tcp or ssl
             response_timeout: 5 # seconds
             interval: 30 # seconds
