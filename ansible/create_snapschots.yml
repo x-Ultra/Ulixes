@@ -1,12 +1,16 @@
 ---
-  - name: Creating volume of Ulixes server
-      ec2_snapshot:
-      volume_id: "{{ulixes1.instances.block_device_mappings.ebs.volume_id}}"
+  - name: Creating Snapshots & configuring autoscaling
+    hosts: localhost
 
-  - name: Creating volume of Hermes server
-      ec2_snapshot:
-      volume_id: "{{hermes1.instances.block_device_mappings.ebs.volume_id}}"
+    tasks:
+      - name: Creating volume of Pythia server
+        ec2_snapshot:
+          volume_id: "{{pythia1.instances.block_device_mappings.ebs.volume_id}}"
 
-  - name: Creating volume of Pythia server
-      ec2_snapshot:
-      volume_id: "{{pythia1.instances.block_device_mappings.ebs.volume_id}}"
+      - name: Creating volume of Ulixes server
+        ec2_snapshot:
+          volume_id: "{{ulixes1.instances.block_device_mappings.ebs.volume_id}}"
+
+      - name: Creating volume of Hermes server
+        ec2_snapshot:
+          volume_id: "{{hermes1.instances.block_device_mappings.ebs.volume_id}}"

@@ -8,8 +8,8 @@
         bootstrap_port: 11111
         frankfurt: eu-central-1
         milano: eu-south-1
-        server_ami: ami-05ca073a83ad2f28c
-        server_ami_m: ami-0d7f30e679cc03aa8
+        server_ami: ami-00edb93a4d68784e3
+        server_ami_m: ami-01ce136ac703e9899
         key_name: Test
         key_name_m: KeyPair
 
