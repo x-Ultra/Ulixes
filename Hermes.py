@@ -21,10 +21,11 @@ port = int(get("FOG_PORT"))
 MY_IP = "172.74.2.203"
 BOOTSTRAP_IP = get("BOOTSTRAP_IP")
 ACCEPT_LIST_PORT = int(get("BOOTSTRAP_PORT"))
+BEAT_PORT = int(get("BEAT_PORT"))
 
 def bootstrap():
     join_bootstrap(25, MY_IP, "1214.234", "1114.243", BOOTSTRAP_IP, ACCEPT_LIST_PORT,
-                   9999, 10)
+                   BEAT_PORT, 10)
 
 
 class ClientThread(threading.Thread):

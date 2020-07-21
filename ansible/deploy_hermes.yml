@@ -1,5 +1,5 @@
 ---
-- hosts: tag_server_ulixes
+- hosts: web
   remote_user: ec2-user
 
   vars:
@@ -16,7 +16,13 @@
     - name: install python3
       become: yes # we need root privileges 
       yum:
-        name: python3
+        name: python3.x86_64
+        state: present
+
+    - name: install pip
+      become: yes # we need root privileges 
+      yum:
+        name: python3-pip.noarch
         state: present
 
     - name: install required Python modules
@@ -33,9 +39,11 @@
 
     - name: download Ulixes repository
       command: git clone https://github.com/UltraLe/Ulixes.git "{{ remote_app_dir }}"
+      ignore_errors: yes
 
     - name: move service in correct folder
-      command: mv "{{remote_app_dir}}"/ansible/hermes.service /etc/systemd/system/
+      become: yes
+      command: cp "{{remote_app_dir}}"/ansible/hermes.service /etc/systemd/system/
 
     - name: enable and start systemd service
       become: yes 
@@ -44,7 +52,6 @@
         state: restarted
         name: "hermes.service"
         enabled: yes
-      when: app.changed
 
     - name: copy aws config file
       become: yes 
@@ -52,8 +59,20 @@
         src: "../credentials.json"
         dest: "{{remote_app_dir}}/"
 
+    - name: copy aws config file
+      become: yes 
+      copy:
+        src: "../config.json"
+        dest: "{{remote_app_dir}}/"
 
-    
+    - name: start service
+      become: yes
+      command: systemctl daemon-reload
 
+    - name: start service
+      become: yes
+      command: systemctl start hermes.service
 
-
+    - name: start service
+      become: yes
+      command: systemctl enable hermes.service

@@ -1,7 +1,8 @@
 [Unit]
-Description=Simple systemd service for FlaskPlot.
+Description=Simple systemd service for Hermes.
 
-[Service]Type=simple
+[Service]
+Type=simple
 WorkingDirectory=/home/ec2-user/Ulixes
 ExecStart=/usr/bin/python3 /home/ec2-user/Ulixes/Hermes.py
 
