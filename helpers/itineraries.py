@@ -123,6 +123,7 @@ def build_json_itineraries(solutions, transp,userLat, userLon, t, graph, dist):
             image = pictureManager.Image(monName, monumentImageUrl)
             monument["Picture"] = pictureManager.getBase64Picture(image)
             monument["Coordinates"] = str(landmarks_info[monName][1]) + ", " + str(landmarks_info[monName][2])
+            monument["Description"] = landmarks_info[monName][4]
             monuments.append(monument)
 
 
@@ -174,89 +175,6 @@ def find_itineraries(location, interval, graph, landmarks, dist, transp, lat, lo
     solutions = graph.find_best_path(location, interval)
     
     return build_json_itineraries(solutions, transp,lat, lon, interval, graph, dist)
-
-
-    # pass parameters to algorithm
-    colosseoPict = get_image_by_name("colosseo.jpeg")
-    piazzaSpagnaPict = get_image_by_name("piazzaSpagna.jpg")
-    piramidePict = get_image_by_name("piramide.jpg")
-
-    result = [
-        {
-            "ID": "coolhash1",
-            "MeansOfTransp": "bici",
-            "Departure": "9:45",
-            "ItineraryMonuments": [
-                {
-                    "Monument":
-                        {
-                            "Name": "Colosseo",
-                            "Picture": colosseoPict,
-                            "Coordinates": "lat1, lon1"
-                        },
-                    "Position": "1",
-                    "ExpectedArrTime": "10:00"
-                },
-                {
-                    "Monument":
-                        {
-                            "Name": "Piazza Di Spagna",
-                            "Picture": piazzaSpagnaPict,
-                            "Coordinates": "lat2, lon2"
-                        },
-                    "Position": "2",
-                    "ExpectedArrTime": "12:00"
-                },
-                {
-                    "Monument":
-                        {
-                            "Name": "Piramide",
-                            "Picture": piramidePict,
-                            "Coordinates": "lat3, lon3"
-                        },
-                    "Position": "3",
-                    "ExpectedArrTime": "16:00"
-                }
-            ]
-        },
-        {
-            "ID": "coolhash2",
-            "MeansOfTransp": "bici",
-            "Departure": "12:45",
-            "ItineraryMonuments": [
-                {
-                    "Monument":
-                        {
-                            "Name": "Gelateria",
-                            "Picture": "",
-                            "Coordinates": "lat1, lon1"
-                        },
-                    "Position": "1",
-                    "ExpectedArrTime": "13:00"
-                },
-                {
-                    "Monument":
-                        {
-                            "Name": "CampusX",
-                            "Picture": "",
-                            "Coordinates": "lat2, lon2"
-                        },
-                    "Position": "2",
-                    "ExpectedArrTime": "20:00"
-                },
-                {
-                    "Monument": {
-                        "Name": "Mensa",
-                        "Picture": "",
-                        "Coordinates": "lat3, lon3"
-                    },
-                    "Position": "3",
-                    "ExpectedArrTime": "20:30"
-                }
-            ]
-        }
-    ]
-    return json.dumps(result)
 
 """
 if __name__ == "__main__":

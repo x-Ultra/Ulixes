@@ -1,0 +1,59 @@
+---
+- hosts: tag_server_ulixes
+  remote_user: ec2-user
+
+  vars:
+    remote_home: "/home/ec2-user"
+    remote_app_dir: "{{remote_home}}/Ulixes"
+
+  tasks:
+    - name: download Git
+      become: yes
+      yum:
+        name: git
+        state: present
+
+    - name: install python3
+      become: yes # we need root privileges 
+      yum:
+        name: python3
+        state: present
+
+    - name: install required Python modules
+      become: yes 
+      pip:
+        name: googlemaps
+        executable: pip3
+
+    - name: install required Python modules
+      become: yes 
+      pip:
+        name: boto3
+        executable: pip3
+
+    - name: download Ulixes repository
+      command: git clone https://github.com/UltraLe/Ulixes.git "{{ remote_app_dir }}"
+
+    - name: move service in correct folder
+      command: mv "{{remote_app_dir}}"/ansible/hermes.service /etc/systemd/system/
+
+    - name: enable and start systemd service
+      become: yes 
+      systemd:
+        daemon_reload: yes
+        state: restarted
+        name: "hermes.service"
+        enabled: yes
+      when: app.changed
+
+    - name: copy aws config file
+      become: yes 
+      copy:
+        src: "../credentials.json"
+        dest: "{{remote_app_dir}}/"
+
+
+    
+
+
+
