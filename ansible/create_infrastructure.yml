@@ -9,7 +9,8 @@
         frankfurt: eu-central-1
         milano: eu-south-1
         server_ami: ami-05ca073a83ad2f28c
-        key_name: KeyPairF
+        server_ami_m: ami-0d7f30e679cc03aa8
+        key_name: Test
         key_name_m: KeyPair
 
     tasks:
@@ -90,7 +91,7 @@
           cidr: 10.10.1.0/24
           az: "{{ constants.milano }}a"
           tags:
-            Name: Subnet A
+            Name: Subnet A (M)
         register: subnet_a_m  
 
       - name: Create subnet b (Milano)
@@ -101,7 +102,7 @@
           az: "{{ constants.milano }}b"
           cidr: 10.10.2.0/24
           tags:
-            Name: Subnet B
+            Name: Subnet B (M)
         register: subnet_b_m      
 
       - name: Create subnet c (Milano)
@@ -112,12 +113,14 @@
           cidr: 10.10.3.0/24
           az: "{{ constants.milano }}c"
           tags:
-            Name: Subnet C
+            Name: Subnet C (M)
         register: subnet_c_m
 
       # Creazione Route table con le subnets create sopra
       - name: Creating the route table (Frankfurt)
         ec2_vpc_route_table:
+          tags:
+            rt: frankfurt
           vpc_id: "{{ vpc_f.vpc.id }}"
           region: "{{ constants.frankfurt }}"
           subnets:
@@ -133,6 +136,8 @@
       # Creazione Route table con le subnets create sopra
       - name: Creating the route table (Milano)
         ec2_vpc_route_table:
+          tags:
+            rt: milan
           vpc_id: "{{ vpc_m.vpc.id }}"
           region: "{{ constants.milano }}"
           subnets:
@@ -185,7 +190,7 @@
           state: present
           name: SG Hermes
           description: Inbound roules for Hermes servers
-          vpc_id: "{{ vpc_f.vpc.id }}"
+          vpc_id: "{{ vpc_m.vpc.id }}"
           region: "{{ constants.milano }}"
           rules:
             - proto: tcp
@@ -289,6 +294,45 @@
             unhealthy_threshold: 2
             healthy_threshold: 10
 
+      # EC2 instances for Hermes
+      - name: Creating EC2 instance of Hermes server on subnet a
+        ec2:
+          state: present
+          tenancy: default
+          assign_public_ip: yes
+          instance_type: t3.micro
+          group_id: "{{ sg_hermes.group_id }}"
+          image: "{{ constants.server_ami_m }}"
+          instance_tags:
+            server: hermes
+          key_name: "{{ constants.key_name_m }}"
+          region: "{{ constants.milano }}"
+          vpc_subnet_id: "{{ subnet_a_m.subnet.id }}"
+          count: 1
+          wait: yes
+          wait_timeout: 320
+        register: hermes1
+
+      - name: Creating EC2 instance of Hermes server on subnet b
+        ec2:
+          state: present
+          tenancy: default
+          assign_public_ip: yes
+          instance_type: t3.micro
+          group_id: "{{ sg_hermes.group_id }}"
+          image: "{{ constants.server_ami_m }}"
+          instance_tags:
+            server: hermes
+          key_name: "{{ constants.key_name_m }}"
+          region: "{{ constants.milano }}"
+          vpc_subnet_id: "{{ subnet_b_m.subnet.id }}"
+          count: 1
+          wait: yes
+          wait_timeout: 320
+        register: hermes2
+        #IP: hermes2.instances.network_interfaces.association.public_ip
+
+
       # Creating EC2 instances for Ulixes
       - name: Creating EC2 instace of Ulixes server on subnet a
         ec2:
@@ -380,44 +424,6 @@
           wait: yes
           wait_timeout: 320
         register: pythia2
-
-      # EC2 instances for Hermes
-      - name: Creating EC2 instance of Hermes server on subnet a
-        ec2:
-          state: present
-          tenancy: default
-          assign_public_ip: yes
-          instance_type: t2.micro
-          group_id: "{{ sg_hermes.group_id }}"
-          image: "{{ constants.server_ami }}"
-          instance_tags:
-            server: hermes
-          key_name: "{{ constants.key_name_m }}"
-          region: "{{ constants.milano }}"
-          vpc_subnet_id: "{{ subnet_a_m.subnet.id }}"
-          count: 1
-          wait: yes
-          wait_timeout: 320
-        register: hermes1
-
-      - name: Creating EC2 instance of Hermes server on subnet b
-        ec2:
-          state: present
-          tenancy: default
-          assign_public_ip: yes
-          instance_type: t2.micro
-          group_id: "{{ sg_hermes.group_id }}"
-          image: "{{ constants.server_ami }}"
-          instance_tags:
-            server: hermes
-          key_name: "{{ constants.key_name_m }}"
-          region: "{{ constants.milano }}"
-          vpc_subnet_id: "{{ subnet_b_m.subnet.id }}"
-          count: 1
-          wait: yes
-          wait_timeout: 320
-        register: hermes2
-        #IP: hermes2.instances.network_interfaces.association.public_ip
 
       # Memcached
       - elasticache:
