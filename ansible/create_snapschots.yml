@@ -5,12 +5,37 @@
     tasks:
       - name: Creating volume of Pythia server
         ec2_snapshot:
-          volume_id: "{{pythia1.instances.block_device_mappings.ebs.volume_id}}"
+          volume_id: "{{lookup('file', './pythia') }}"
+          snapshot_tags:
+                vol: pythia
 
       - name: Creating volume of Ulixes server
         ec2_snapshot:
-          volume_id: "{{ulixes1.instances.block_device_mappings.ebs.volume_id}}"
+          volume_id: "{{lookup('file', './ulixes') }}"
+          snapshot_tags:
+                vol: ulixes
 
-      - name: Creating volume of Hermes server
+      - name: Creating volumesof Hermes server
         ec2_snapshot:
-          volume_id: "{{hermes1.instances.block_device_mappings.ebs.volume_id}}"
+          volume_id: "{{lookup('file', './hermes') }}"
+          snapshot_tags:
+                vol: ulixes
+
+      - name: Gathering info of volumes of Hermes server
+        ec2_snapshot_info:
+          filters:
+            "tag:vol": pythia
+        register: pythia_vol
+        # acces id con pythia.volume_id
+
+      - name: Gathering info of volumes of Hermes server
+        ec2_snapshot_info:
+          filters:
+            "tag:vol": hermes
+        register: hermes_vol
+
+      - name: Gathering info of volumes of Ulixes server
+        ec2_snapshot_info:
+          filters:
+            "tag:vol": ulixes
+        register: ulixes_vol
