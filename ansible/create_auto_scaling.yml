@@ -1,0 +1,93 @@
+---
+  - name: Creating autoscaling groups
+    hosts: localhost
+    vars:
+      constants:
+        frankfurt: eu-central-1
+        milano: eu-south-1
+        key_name: KeyPairF
+        key_name_m: KeyPair
+
+    tasks:
+        # Rcover information from files
+        - name: recover ulixes id
+          debug: var=item
+          with_file:
+            - "./ulixes"
+          register: ulixes_id
+
+        - name: recover ulixes security group
+          debug: var=item
+          with_file:
+            - "./ulixes_sg"
+          register: sg_ulixes
+
+        - name: recover pythia id
+          debug: var=item
+          with_file:
+            - "./pythia"
+          register: pythia_id
+
+        - name: recover pythia security group
+          debug: var=item
+          with_file:
+            - "./pythia_sg"
+          register: sg_pythia
+
+        - name: recover vpc id
+          debug: var=item
+          with_file:
+            - "./subnet_id"
+          register: subnet_id
+
+
+        #Launch configurations
+        - ec2_lc:
+            name: ulixes_lc
+            instance_id: "{{ ulixes_id.results[0].item }}"
+            key_name: "{{ constants.key_name }}"
+            security_groups: ["{{ sg_ulixes.results[0].item }}"]
+            volumes:
+            - device_name: /dev/sda1
+              volume_size: 120
+              volume_type: io1
+              iops: 3000
+              delete_on_termination: true
+
+        - ec2_lc:
+            name: pythia_lc
+            instance_id: "{{ pythia_id.results[0].item }}"
+            key_name: "{{ constants.key_name }}"
+            security_groups: ["{{ sg_pythia.results[0].item }}"]
+            volumes:
+            - device_name: /dev/sda1
+              volume_size: 120
+              volume_type: io1
+              iops: 3000
+              delete_on_termination: true
+
+        #Autoscaling groups
+        - ec2_asg:
+            name: pythia_asg
+            launch_config_name: pythia_lc
+            health_check_period: 60
+            health_check_type: ELB
+            replace_all_instances: yes
+            min_size: 1
+            max_size: 5
+            vpc_zone_identifier: "{{ subnet_id.results[0].item }}"
+            desired_capacity: 3
+            region: "{{ constants.frankfurt }}"
+
+        - ec2_asg:
+            name: ulixes_asg
+            launch_config_name: ulixes_lc
+            load_balancers: [ 'Load-Balancer-Ulixes' ]
+            health_check_period: 60
+            health_check_type: ELB
+            replace_all_instances: yes
+            min_size: 1
+            max_size: 5
+            vpc_zone_identifier: "{{ subnet_id.results[0].item }}"
+            desired_capacity: 3
+            region: "{{ constants.frankfurt }}"

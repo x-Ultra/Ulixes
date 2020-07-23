@@ -299,36 +299,38 @@
       # EC2 instances for Hermes
       - name: Creating EC2 instance of Hermes server on subnet a
         ec2:
-          state: present
           tenancy: default
           assign_public_ip: yes
           instance_type: t3.micro
           group_id: "{{ sg_hermes.group_id }}"
           image: "{{ constants.server_ami_m }}"
           instance_tags:
-            server: hermes
+            server: hermes sub a
+          exact_count: 1
+          count_tag: 
+            server: hermes sub a
           key_name: "{{ constants.key_name_m }}"
           region: "{{ constants.milano }}"
           vpc_subnet_id: "{{ subnet_a_m.subnet.id }}"
-          count: 1
           wait: yes
           wait_timeout: 320
         register: hermes1
 
       - name: Creating EC2 instance of Hermes server on subnet b
         ec2:
-          state: present
           tenancy: default
           assign_public_ip: yes
           instance_type: t3.micro
           group_id: "{{ sg_hermes.group_id }}"
           image: "{{ constants.server_ami_m }}"
           instance_tags:
-            server: hermes
+            server: hermes sub b
+          exact_count: 1
+          count_tag: 
+            server: hermes sub b
           key_name: "{{ constants.key_name_m }}"
           region: "{{ constants.milano }}"
           vpc_subnet_id: "{{ subnet_b_m.subnet.id }}"
-          count: 1
           wait: yes
           wait_timeout: 320
         register: hermes2
@@ -338,54 +340,57 @@
       # Creating EC2 instances for Ulixes
       - name: Creating EC2 instace of Ulixes server on subnet a
         ec2:
-          state: present
           tenancy: default
           assign_public_ip: yes
           instance_type: t2.micro
           group_id: "{{ sg_ulixes.group_id }}"
           image: "{{ constants.server_ami }}"
           instance_tags:
-            server: ulixes
+            server: ulixes sub a
+          exact_count: 1
+          count_tag: 
+            server: ulixes sub a
           key_name: "{{ constants.key_name }}"
           region: "{{ constants.frankfurt }}"
           vpc_subnet_id: "{{ subnet_a.subnet.id }}"
-          count: 1
           wait: yes
           wait_timeout: 320
         register: ulixes1
 
       - name: Creating EC2 instace of Ulixes server on subnet b
         ec2:
-          state: present
           tenancy: default
           assign_public_ip: yes
           instance_type: t2.micro
           group_id: "{{ sg_ulixes.group_id }}"
           image: "{{ constants.server_ami }}"
           instance_tags:
-            server: ulixes
+            server: ulixes sub b
+          exact_count: 1
+          count_tag: 
+            server: ulixes sub b
           key_name: "{{ constants.key_name }}"
           region: "{{ constants.frankfurt }}"
           vpc_subnet_id: "{{ subnet_b.subnet.id }}"
-          count: 1
           wait: yes
           wait_timeout: 320
         register: ulixes2
 
       - name: Creating EC2 instace of Ulixes server on subnet c
         ec2:
-          state: present
           tenancy: default
           assign_public_ip: yes
           instance_type: t2.micro
           group_id: "{{ sg_ulixes.group_id }}"
           image: "{{ constants.server_ami }}"
           instance_tags:
-            server: ulixes
+            server: ulixes sub c
+          exact_count: 1
+          count_tag: 
+            server: ulixes sub c
           key_name: "{{ constants.key_name }}"
           region: "{{ constants.frankfurt }}"
           vpc_subnet_id: "{{ subnet_c.subnet.id }}"
-          count: 1
           wait: yes
           wait_timeout: 320
         register: ulixes3
@@ -393,39 +398,62 @@
       # EC2 instances for Pythia
       - name: Creating EC2 instance of Pythia server on subnet a
         ec2:
-          state: present
           tenancy: default
           assign_public_ip: yes
           instance_type: t2.micro
           group_id: "{{ sg_pythia.group_id }}"
           image: "{{ constants.server_ami }}"
           instance_tags:
-            server: pythia
+            server: pythia sub a
+          exact_count: 1
+          count_tag: 
+            server: pythia sub a
           key_name: "{{ constants.key_name }}"
           region: "{{ constants.frankfurt }}"
           vpc_subnet_id: "{{ subnet_a.subnet.id }}"
-          count: 1
           wait: yes
           wait_timeout: 320
         register: pythia1
 
       - name: Creating EC2 instance of Pythia server on subnet b
         ec2:
-          state: present
           tenancy: default
           assign_public_ip: yes
           instance_type: t2.micro
           group_id: "{{ sg_pythia.group_id }}"
           image: "{{ constants.server_ami }}"
           instance_tags:
-            server: pythia
+            server: pythia sub b
+          exact_count: 1
+          count_tag: 
+            server: pythia sub b
           key_name: "{{ constants.key_name }}"
           region: "{{ constants.frankfurt }}"
           vpc_subnet_id: "{{ subnet_b.subnet.id }}"
-          count: 1
           wait: yes
           wait_timeout: 320
         register: pythia2
+
+      - debug:
+          msg: "{{ sg_ulixes }}"
+
+      # Writing vpc id on file
+      - name: Writing subnet id on file
+        local_action: copy content="{{ subnet_a.subnet.id }}" dest=./subnet_id
+      
+      # Writing volumes Ids on file
+      - name: Writing Ulixes id on file
+        local_action: copy content="{{ ulixes1.tagged_instances[0].id }}" dest=./ulixes
+      - name: Writing pythia id on file
+        local_action: copy content="{{ pythia1.tagged_instances[0].id }}" dest=./pythia
+      
+      #Writing security group names on file
+      - name: Writing Ulixes sg on file
+        local_action: copy content="{{ sg_ulixes.group_id }}" dest=./ulixes_sg
+      - name: Writing pythia sg on file
+        local_action: copy content="{{ sg_pythia.group_id }}" dest=./pythia_sg
+      
+
 
       # Memcached
       - elasticache:
@@ -439,6 +467,7 @@
           cache_port: "{{constants.memcached_port}}"
           cache_security_groups: "{{sg_memcached.group_id}}"
           zone: "{{constants.frankfurt}}"
+          region: "{{constants.frankfurt}}"
     
       - name: paperino
         elasticache_info:

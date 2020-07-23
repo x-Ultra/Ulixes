@@ -1,0 +1,9 @@
+problemi?
+
+- Come facciamo a mettere nel domain gli ip dell'autoscaling di pithia?
+- Per qualche cazzo di motivo ansible non va avanti dopo aver creato l'autoscaling (solo per ulisse?????????????????????)
+- Non sono riuscito a capire come impostare una scaling policy
+
+Da cambiare
+
+Non server per ulisse fare instanze nelle diverse subnet, possiamo metterlo nell impostazioni dell'autoscaling
