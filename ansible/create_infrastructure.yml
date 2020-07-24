@@ -295,6 +295,7 @@
             interval: 30 # seconds
             unhealthy_threshold: 2
             healthy_threshold: 10
+        register: ulixes_lb
 
       # EC2 instances for Hermes
       - name: Creating EC2 instance of Hermes server on subnet a
@@ -434,8 +435,6 @@
           wait_timeout: 320
         register: pythia2
 
-      - debug:
-          msg: "{{ sg_ulixes }}"
 
       # Writing vpc id on file
       - name: Writing subnet id on file
@@ -453,26 +452,26 @@
       - name: Writing pythia sg on file
         local_action: copy content="{{ sg_pythia.group_id }}" dest=./pythia_sg
       
-
-
-      # Memcached
-      - elasticache:
-          name: Memcached
-          state: present
-          engine: memcached
-          cache_engine_version: 5.0.6
-          node_type: cache.t2.small
-          num_nodes: 3
-          wait: yes
-          cache_port: "{{constants.memcached_port}}"
-          cache_security_groups: "{{sg_memcached.group_id}}"
-          zone: "{{constants.frankfurt}}"
-          region: "{{constants.frankfurt}}"
+        # Currently not working
+      # # Memcached
+      # - elasticache:
+      #     name: Memcached
+      #     state: present
+      #     engine: memcached
+      #     cache_engine_version: 5.0.6
+      #     node_type: cache.t2.small
+      #     num_nodes: 3
+      #     wait: yes
+      #     cache_port: "{{constants.memcached_port}}"
+      #     cache_security_groups: "{{sg_memcached.group_id}}"
+      #     zone: "{{constants.frankfurt}}"
+      #     region: "{{constants.frankfurt}}"
     
-      - name: paperino
+      - name: Recover memcached info
         elasticache_info:
         register: memcached
         #IP: memcached.elasticache_clusters.cache_nodes.endpoint.address
+
 
       # Generate domains
       - name: Creating a public hosting zone
@@ -484,36 +483,36 @@
           state: present
           zone: resvag.com
           record: ulixes.resvag.com
-          type: A
+          type: CNAME
           region: "{{ constants.frankfurt }}"
-          value: 
-            - "{{ulixes1.instances.network_interfaces.association.public_ip}}"
-            - "{{ulixes2.instances.network_interfaces.association.public_ip}}"
-            - "{{ulixes3.instances.network_interfaces.association.public_ip}}"
+          value: "{{ ulixes_lb.elb.dns_name }}"
           # Routing policy
           identifier: "ulixes@resvag"
 
-      - route53:
-          state: present
-          zone: resvag.com
-          record: pythia.resvag.com
-          type: A
-          region: "{{ constants.frankfurt }}"
-          value: 
-            - "{{pythia1.instances.network_interfaces.association.public_ip}}"
-            - "{{pythia2.instances.network_interfaces.association.public_ip}}"
-          # Routing policy
-          identifier: "pythia@resvag"
-      - route53:
-          state: present
-          zone: resvag.com
-          record: memcached.resvag.com
-          type: A
-          region: "{{ constants.frankfurt }}"
-          value: 
-            - "{{memcached.elasticache_clusters.cache_nodes.endpoint.address}}"
-          # Routing policy
-          identifier: "memcached@resvag"
+          # Doesnt work with autoscaling
+      # - route53:
+      #     state: present
+      #     zone: resvag.com
+      #     record: pythia.resvag.com
+      #     type: A
+      #     region: "{{ constants.frankfurt }}"
+      #     value: 
+      #       - "{{pythia1.instances.network_interfaces.association.public_ip}}"
+      #       - "{{pythia2.instances.network_interfaces.association.public_ip}}"
+      #     # Routing policy
+      #     identifier: "pythia@resvag"
+
+        # MEmcached not working
+      # - route53:
+      #     state: present
+      #     zone: resvag.com
+      #     record: memcached.resvag.com
+      #     type: A
+      #     region: "{{ constants.frankfurt }}"
+      #     value: 
+      #       - "{{memcached.elasticache_clusters.cache_nodes.endpoint.address}}"
+      #     # Routing policy
+      #     identifier: "memcached@resvag"
 
       # Cloud Front
       - cloudfront_distribution:
@@ -522,7 +521,6 @@
           origins:
               - id: 'load balancer ulixes'
                 domain_name: ulixes.resvag.com
-                origin_path: /
           default_cache_behavior:
             target_origin_id: 'load balancer ulixes'
             forwarded_values:
@@ -543,8 +541,3 @@
                 - HEAD
           comment: this is a cloudfront distribution for ulixes
 
-      # Writing volumes Ids on file
-      - name: Writing on files volumes IDs
-        local_action: copy content={{ ulixes1.instances.block_device_mappings.ebs.volume_id }} dest=./ulixes
-        local_action: copy content={{ hermes1.instances.block_device_mappings.ebs.volume_id }} dest=./hermes
-        local_action: copy content={{ pythia1.instances.block_device_mappings.ebs.volume_id }} dest=./pythia
