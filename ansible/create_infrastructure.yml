@@ -10,10 +10,12 @@
         milano: eu-south-1
         server_ami: ami-00edb93a4d68784e3
         server_ami_m: ami-01ce136ac703e9899
-        key_name: KeyPairF
+        key_name: Test
         key_name_m: KeyPair
         ulixes_port: 5005
         hermes_port: 8888
+        cache_sub_group_name: memsubgroup
+        cache_param_group: coolparamgroup
 
     tasks:
 
@@ -297,6 +299,40 @@
             healthy_threshold: 10
         register: ulixes_lb
 
+      # Memcached
+      # Add or change a subnet group
+      - name: Creating memcached subnet group
+        elasticache_subnet_group:
+          state: present
+          name: "{{constants.cache_sub_group_name}}"
+          description: What a cool subnetgroup
+          region: "{{ constants.frankfurt }}"
+          subnets: "{{ subnet_a.subnet.id }}"
+
+      - name: 'Create a test parameter group'
+        elasticache_parameter_group:
+          name: "{{constants.cache_param_group}}"
+          group_family: memcached1.4
+          description: Cache parameter group
+          state: present
+          region: "{{constants.frankfurt}}"
+        register: cache_param_group
+
+      - name: Creating Memcached Cluster
+        elasticache:
+          cache_subnet_group: "{{constants.cache_sub_group_name}}"
+          cache_parameter_group: "{{constants.cache_param_group}}"
+          security_group_ids: "{{ sg_memcached.group_id }}"
+          name: Memcached
+          state: present
+          engine: memcached
+          cache_engine_version: 1.4.14
+          node_type: cache.t2.small
+          num_nodes: 3
+          wait: yes
+          cache_port: "{{constants.memcached_port}}"
+          region: "{{constants.frankfurt}}"
+
       # EC2 instances for Hermes
       - name: Creating EC2 instance of Hermes server on subnet a
         ec2:
@@ -451,21 +487,6 @@
         local_action: copy content="{{ sg_ulixes.group_id }}" dest=./ulixes_sg
       - name: Writing pythia sg on file
         local_action: copy content="{{ sg_pythia.group_id }}" dest=./pythia_sg
-      
-        # Currently not working
-      # # Memcached
-      # - elasticache:
-      #     name: Memcached
-      #     state: present
-      #     engine: memcached
-      #     cache_engine_version: 5.0.6
-      #     node_type: cache.t2.small
-      #     num_nodes: 3
-      #     wait: yes
-      #     cache_port: "{{constants.memcached_port}}"
-      #     cache_security_groups: "{{sg_memcached.group_id}}"
-      #     zone: "{{constants.frankfurt}}"
-      #     region: "{{constants.frankfurt}}"
     
       - name: Recover memcached info
         elasticache_info:
@@ -490,29 +511,28 @@
           identifier: "ulixes@resvag"
 
           # Doesnt work with autoscaling
-      # - route53:
-      #     state: present
-      #     zone: resvag.com
-      #     record: pythia.resvag.com
-      #     type: A
-      #     region: "{{ constants.frankfurt }}"
-      #     value: 
-      #       - "{{pythia1.instances.network_interfaces.association.public_ip}}"
-      #       - "{{pythia2.instances.network_interfaces.association.public_ip}}"
-      #     # Routing policy
-      #     identifier: "pythia@resvag"
+      - route53:
+          state: present
+          zone: resvag.com
+          record: pythia.resvag.com
+          type: A
+          region: "{{ constants.frankfurt }}"
+          value:
+            - "{{pythia1.instances.network_interfaces.association.public_ip}}"
+            - "{{pythia2.instances.network_interfaces.association.public_ip}}"
+          # Routing policy
+          identifier: "pythia@resvag"
 
-        # MEmcached not working
-      # - route53:
-      #     state: present
-      #     zone: resvag.com
-      #     record: memcached.resvag.com
-      #     type: A
-      #     region: "{{ constants.frankfurt }}"
-      #     value: 
-      #       - "{{memcached.elasticache_clusters.cache_nodes.endpoint.address}}"
-      #     # Routing policy
-      #     identifier: "memcached@resvag"
+      # MEmcached not working
+      - route53:
+          state: present
+          zone: resvag.com
+          record: memcached.resvag.com
+          type: A
+          region: "{{ constants.frankfurt }}"
+          value: "{{memcached.elasticache_clusters.cache_nodes.endpoint.address}}"
+          # Routing policy
+          identifier: "memcached@resvag"
 
       # Cloud Front
       - cloudfront_distribution:
