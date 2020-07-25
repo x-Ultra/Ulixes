@@ -534,7 +534,7 @@
           # Routing policy
           identifier: "memcached@resvag"
 
-      # Cloud Front
+      # Cloud Frontsad
       - cloudfront_distribution:
           state: present
           caller_reference: cloudfront resvag
