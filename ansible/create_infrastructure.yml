@@ -480,47 +480,19 @@
         register: memcached
         #IP: memcached.elasticache_clusters.cache_nodes.endpoint.address
 
+      # registering Domains in DNS
+      - name: Using no-ip API to register (free) memcached ip into dns
+        command:
+          cmd: python dnsUpdater.py memcached  {{ memcached.elasticache_clusters[0].cache_nodes[0].endpoint.address }}
 
-      # Generate domains
-      - name: Creating a public hosting zone
-        route53_zone:
-          zone: resvag.com
-          comment: The zone for all our domains
+      - name: Using no-ip API to register (free) ulixes ip into dns
+        command:
+          cmd: python dnsUpdater.py ulixes  {{ ulixes_lb.elb.dns_name }}
 
-      - route53:
-          state: present
-          zone: resvag.com
-          record: ulixes.resvag.com
-          type: CNAME
-          region: "{{ constants.frankfurt }}"
-          value: "{{ ulixes_lb.elb.dns_name }}"
-          # Routing policy
-          identifier: "ulixes@resvag"
+      - name: Using no-ip API to register (free) pythia ip into dns
+        command:
+          cmd: python dnsUpdater.py memcached  {{ pythia_lb.elb.dns_name }}
 
-      - route53:
-          state: present
-          zone: resvag.com
-          record: pythia.resvag.com
-
-          type: CNAME
-          region: "{{ constants.frankfurt }}"
-          value: "{{ pythia_lb.elb.dns_name }}"
-          # Routing policy
-          identifier: "pythia@resvag"
-
-      - debug:
-          msg: "Memcached: {{memcached}}"
-
-      # Memcached not working
-      - route53:
-          state: present
-          zone: resvag.com
-          record: memcached.resvag.com
-          type: CNAME
-          region: "{{ constants.frankfurt }}"
-          value: "{{ memcached.elasticache_clusters[0].cache_nodes[0].endpoint.address }}"
-          # Routing policy
-          identifier: "memcached@resvag"
 
       # Cloud Frontsad
       - cloudfront_distribution:
