@@ -4,6 +4,8 @@ problemi?
 - Per qualche cazzo di motivo ansible non va avanti dopo aver creato l'autoscaling (solo per ulisse?????????????????????)
 - Non sono riuscito a capire come impostare una scaling policy
 
+- elasticache OK
+
 Da cambiare
 
 Non server per ulisse fare instanze nelle diverse subnet, possiamo metterlo nell impostazioni dell'autoscaling
