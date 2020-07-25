@@ -480,6 +480,10 @@
         register: memcached
         #IP: memcached.elasticache_clusters.cache_nodes.endpoint.address
 
+      - debug:
+          msg: "{{ ulixes_lb}}""
+
+      # TODO use elb.ip NOT elb.dns_name !!!!!!!!!!!!!!!!
       # registering Domains in DNS
       - name: Using no-ip API to register (free) memcached ip into dns
         command:
