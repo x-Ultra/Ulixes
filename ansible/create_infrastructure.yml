@@ -185,6 +185,11 @@
               - "{{ constants.memcached_port }}"
               cidr_ip: 0.0.0.0/0
               rule_desc: allow all on memcached port
+            - proto: tcp
+              ports:
+              - 22
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow ssh to set up
         register: sg_ulixes      
 
       - name: Creating security groups for Hermes
@@ -210,6 +215,11 @@
               - "{{ constants.bootstrap_port }}"
               cidr_ip: 0.0.0.0/0
               rule_desc: allow all on bootstrap port
+            - proto: tcp
+              ports:
+              - 22
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow ssh to set up
         register: sg_hermes     
 
       - name: Creating security groups for Pythia
@@ -229,7 +239,12 @@
               ports:
               - "{{ constants.bootstrap_port }}"
               cidr_ip: 0.0.0.0/0
-              rule_desc: allow all on bootstrap port  
+              rule_desc: allow all on bootstrap port
+            - proto: tcp
+              ports:
+              - 22
+              cidr_ip: 0.0.0.0/0
+              rule_desc: allow ssh to set up  
         register: sg_pythia    
 
       - name: Creating security groups for Memcached
@@ -273,12 +288,14 @@
               rule_desc: allow all on bootstrap port
         register: sg_hermes
 
-      # Load Balancer
+      # Load Balancer ulixes
       - local_action:
           module: ec2_elb_lb
           name: "Load-Balancer-Ulixes"
           state: present
           region: "{{ constants.frankfurt }}"
+          instance_ids:
+            - i-0ba546dae444d9547
           subnets:
             - "{{ subnet_a.subnet.id }}"
             - "{{ subnet_b.subnet.id }}"
@@ -288,14 +305,35 @@
               load_balancer_port: "{{ constants.ulixes_port }}"
               instance_port: "{{ constants.ulixes_port }}"
           health_check:
-            ping_protocol: http # options are http, https, ssl, tcp
+            ping_protocol: tcp # options are http, https, ssl, tcp
             ping_port: "{{ constants.ulixes_port }}"
-            ping_path: "/" # not required for tcp or ssl
             response_timeout: 5 # seconds
             interval: 30 # seconds
             unhealthy_threshold: 2
             healthy_threshold: 10
         register: ulixes_lb
+
+      # Load Balancer pythia
+      - local_action:
+          module: ec2_elb_lb
+          name: "Load-Balancer-Pythia"
+          state: present
+          region: "{{ constants.frankfurt }}"
+          subnets:
+            - "{{ subnet_a.subnet.id }}"
+            - "{{ subnet_b.subnet.id }}"
+          listeners:
+            - protocol: tcp # options are http, https, ssl, tcp
+              load_balancer_port: "{{ constants.bootstrap_port }}"
+              instance_port: "{{ constants.bootstrap_port }}"
+          health_check:
+            ping_protocol: tcp # options are http, https, ssl, tcp
+            ping_port: "{{ constants.bootstrap_port }}"
+            response_timeout: 5 # seconds
+            interval: 30 # seconds
+            unhealthy_threshold: 2
+            healthy_threshold: 10
+        register: pythia_lb
 
       # EC2 instances for Hermes
       - name: Creating EC2 instance of Hermes server on subnet a
@@ -358,43 +396,6 @@
           wait_timeout: 320
         register: ulixes1
 
-      - name: Creating EC2 instace of Ulixes server on subnet b
-        ec2:
-          tenancy: default
-          assign_public_ip: yes
-          instance_type: t2.micro
-          group_id: "{{ sg_ulixes.group_id }}"
-          image: "{{ constants.server_ami }}"
-          instance_tags:
-            server: ulixes sub b
-          exact_count: 1
-          count_tag: 
-            server: ulixes sub b
-          key_name: "{{ constants.key_name }}"
-          region: "{{ constants.frankfurt }}"
-          vpc_subnet_id: "{{ subnet_b.subnet.id }}"
-          wait: yes
-          wait_timeout: 320
-        register: ulixes2
-
-      - name: Creating EC2 instace of Ulixes server on subnet c
-        ec2:
-          tenancy: default
-          assign_public_ip: yes
-          instance_type: t2.micro
-          group_id: "{{ sg_ulixes.group_id }}"
-          image: "{{ constants.server_ami }}"
-          instance_tags:
-            server: ulixes sub c
-          exact_count: 1
-          count_tag: 
-            server: ulixes sub c
-          key_name: "{{ constants.key_name }}"
-          region: "{{ constants.frankfurt }}"
-          vpc_subnet_id: "{{ subnet_c.subnet.id }}"
-          wait: yes
-          wait_timeout: 320
-        register: ulixes3
 
       # EC2 instances for Pythia
       - name: Creating EC2 instance of Pythia server on subnet a
@@ -416,29 +417,13 @@
           wait_timeout: 320
         register: pythia1
 
-      - name: Creating EC2 instance of Pythia server on subnet b
-        ec2:
-          tenancy: default
-          assign_public_ip: yes
-          instance_type: t2.micro
-          group_id: "{{ sg_pythia.group_id }}"
-          image: "{{ constants.server_ami }}"
-          instance_tags:
-            server: pythia sub b
-          exact_count: 1
-          count_tag: 
-            server: pythia sub b
-          key_name: "{{ constants.key_name }}"
-          region: "{{ constants.frankfurt }}"
-          vpc_subnet_id: "{{ subnet_b.subnet.id }}"
-          wait: yes
-          wait_timeout: 320
-        register: pythia2
-
-
-      # Writing vpc id on file
-      - name: Writing subnet id on file
-        local_action: copy content="{{ subnet_a.subnet.id }}" dest=./subnet_id
+      # Writing vpc ids on file
+      - name: Writing subnet id a on file
+        local_action: copy content="{{ subnet_a.subnet.id }}" dest=./subnet_id_a
+      - name: Writing subnet id b on file
+        local_action: copy content="{{ subnet_b.subnet.id }}" dest=./subnet_id_b
+      - name: Writing subnet id c on file
+        local_action: copy content="{{ subnet_c.subnet.id }}" dest=./subnet_id_c
       
       # Writing volumes Ids on file
       - name: Writing Ulixes id on file
@@ -489,18 +474,15 @@
           # Routing policy
           identifier: "ulixes@resvag"
 
-          # Doesnt work with autoscaling
-      # - route53:
-      #     state: present
-      #     zone: resvag.com
-      #     record: pythia.resvag.com
-      #     type: A
-      #     region: "{{ constants.frankfurt }}"
-      #     value: 
-      #       - "{{pythia1.instances.network_interfaces.association.public_ip}}"
-      #       - "{{pythia2.instances.network_interfaces.association.public_ip}}"
-      #     # Routing policy
-      #     identifier: "pythia@resvag"
+      - route53:
+          state: present
+          zone: resvag.com
+          record: pythia.resvag.com
+          type: CNAME
+          region: "{{ constants.frankfurt }}"
+          value: "{{ pythia_lb.elb.dns_name }}"
+          # Routing policy
+          identifier: "pythia@resvag"
 
         # MEmcached not working
       # - route53:
