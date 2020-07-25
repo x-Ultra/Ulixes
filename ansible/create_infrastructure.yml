@@ -290,53 +290,6 @@
               rule_desc: allow all on bootstrap port
         register: sg_hermes
 
-      # Load Balancer ulixes
-      - local_action:
-          module: ec2_elb_lb
-          name: "Load-Balancer-Ulixes"
-          state: present
-          region: "{{ constants.frankfurt }}"
-          instance_ids:
-            - i-0ba546dae444d9547
-          subnets:
-            - "{{ subnet_a.subnet.id }}"
-            - "{{ subnet_b.subnet.id }}"
-            - "{{ subnet_c.subnet.id }}"
-          listeners:
-            - protocol: http # options are http, https, ssl, tcp
-              load_balancer_port: "{{ constants.ulixes_port }}"
-              instance_port: "{{ constants.ulixes_port }}"
-          health_check:
-            ping_protocol: tcp # options are http, https, ssl, tcp
-            ping_port: "{{ constants.ulixes_port }}"
-            response_timeout: 5 # seconds
-            interval: 30 # seconds
-            unhealthy_threshold: 2
-            healthy_threshold: 10
-        register: ulixes_lb
-
-      # Load Balancer pythia
-      - local_action:
-          module: ec2_elb_lb
-          name: "Load-Balancer-Pythia"
-          state: present
-          region: "{{ constants.frankfurt }}"
-          subnets:
-            - "{{ subnet_a.subnet.id }}"
-            - "{{ subnet_b.subnet.id }}"
-          listeners:
-            - protocol: tcp # options are http, https, ssl, tcp
-              load_balancer_port: "{{ constants.bootstrap_port }}"
-              instance_port: "{{ constants.bootstrap_port }}"
-          health_check:
-            ping_protocol: tcp # options are http, https, ssl, tcp
-            ping_port: "{{ constants.bootstrap_port }}"
-            response_timeout: 5 # seconds
-            interval: 30 # seconds
-            unhealthy_threshold: 2
-            healthy_threshold: 10
-        register: pythia_lb
-
       # Memcached
       # Add or change a subnet group
       - name: Creating memcached subnet group
@@ -453,6 +406,55 @@
           wait_timeout: 320
         register: pythia1
 
+      # Load Balancer ulixes
+      - local_action:
+          module: ec2_elb_lb
+          name: "Load-Balancer-Ulixes"
+          state: present
+          region: "{{ constants.frankfurt }}"
+          instance_ids:
+            - "{{ ulixes1.tagged_instances[0].id }}"
+          subnets:
+            - "{{ subnet_a.subnet.id }}"
+            - "{{ subnet_b.subnet.id }}"
+            - "{{ subnet_c.subnet.id }}"
+          listeners:
+            - protocol: tcp # options are http, https, ssl, tcp
+              load_balancer_port: "{{ constants.ulixes_port }}"
+              instance_port: "{{ constants.ulixes_port }}"
+          health_check:
+            ping_protocol: tcp # options are http, https, ssl, tcp
+            ping_port: "{{ constants.ulixes_port }}"
+            response_timeout: 5 # seconds
+            interval: 30 # seconds
+            unhealthy_threshold: 2
+            healthy_threshold: 10
+        register: ulixes_lb
+
+      # Load Balancer pythia
+      - local_action:
+          module: ec2_elb_lb
+          name: "Load-Balancer-Pythia"
+          state: present
+          region: "{{ constants.frankfurt }}"
+          instance_ids:
+            - "{{ pythia1.tagged_instances[0].id }}"
+          subnets:
+            - "{{ subnet_a.subnet.id }}"
+            - "{{ subnet_b.subnet.id }}"
+          listeners:
+            - protocol: tcp # options are http, https, ssl, tcp
+              load_balancer_port: "{{ constants.bootstrap_port }}"
+              instance_port: "{{ constants.bootstrap_port }}"
+          health_check:
+            ping_protocol: tcp # options are http, https, ssl, tcp
+            ping_port: "{{ constants.bootstrap_port }}"
+            response_timeout: 5 # seconds
+            interval: 30 # seconds
+            unhealthy_threshold: 2
+            healthy_threshold: 10
+        register: pythia_lb
+
       # Writing vpc ids on file
       - name: Writing subnet id a on file
         local_action: copy content="{{ subnet_a.subnet.id }}" dest=./subnet_id_a
@@ -506,14 +508,17 @@
           # Routing policy
           identifier: "pythia@resvag"
 
-      # MEmcached not working
+      - debug:
+          msg: "Memcached: {{memcached}}"
+
+      # Memcached not working
       - route53:
           state: present
           zone: resvag.com
           record: memcached.resvag.com
-          type: A
+          type: CNAME
           region: "{{ constants.frankfurt }}"
-          value: "{{memcached.elasticache_clusters.cache_nodes.endpoint.address}}"
+          value: "{{ memcached.elasticache_clusters[0].cache_nodes[0].endpoint.address }}"
           # Routing policy
           identifier: "memcached@resvag"
 
