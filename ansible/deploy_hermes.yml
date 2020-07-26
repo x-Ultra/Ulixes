@@ -1,5 +1,5 @@
 ---
-- hosts: web
+- hosts: tag_server_hermes
   remote_user: ec2-user
 
   vars:
