@@ -10,7 +10,7 @@
         milano: eu-south-1
         server_ami: ami-00edb93a4d68784e3
         server_ami_m: ami-01ce136ac703e9899
-        key_name: Test
+        key_name: KeyPairF
         key_name_m: KeyPair
         ulixes_port: 5005
         hermes_port: 8888
@@ -293,17 +293,18 @@
       # Load Balancer ulixes
       - local_action:
           module: ec2_elb_lb
-          name: "Load-Balancer-Ulixes"
+          name: "load-balancer-ulixes"
           state: present
+          # instance_ids:          
+          #   - i-0ba546dae444d9547
           region: "{{ constants.frankfurt }}"
-          instance_ids:
-            - i-0ba546dae444d9547
+          security_group_ids: "{{ sg_LoadBalancer.group_id }}"
           subnets:
             - "{{ subnet_a.subnet.id }}"
             - "{{ subnet_b.subnet.id }}"
             - "{{ subnet_c.subnet.id }}"
           listeners:
-            - protocol: http # options are http, https, ssl, tcp
+            - protocol: tcp # options are http, https, ssl, tcp
               load_balancer_port: "{{ constants.ulixes_port }}"
               instance_port: "{{ constants.ulixes_port }}"
           health_check:
@@ -318,7 +319,7 @@
       # Load Balancer pythia
       - local_action:
           module: ec2_elb_lb
-          name: "Load-Balancer-Pythia"
+          name: "load-balancer-pythia"
           state: present
           region: "{{ constants.frankfurt }}"
           subnets:
@@ -453,6 +454,12 @@
           wait_timeout: 320
         register: pythia1
 
+      - debug:
+          msg: "{{ ulixes1 }}"
+
+      - debug:
+          msg: "{{ pythia1 }}"
+
       # Writing vpc ids on file
       - name: Writing subnet id a on file
         local_action: copy content="{{ subnet_a.subnet.id }}" dest=./subnet_id_a
@@ -490,6 +497,7 @@
           zone: resvag.com
           record: ulixes.resvag.com
           type: CNAME
+          overwrite: yes
           region: "{{ constants.frankfurt }}"
           value: "{{ ulixes_lb.elb.dns_name }}"
           # Routing policy
@@ -499,23 +507,23 @@
           state: present
           zone: resvag.com
           record: pythia.resvag.com
-
+          overwrite: yes
           type: CNAME
           region: "{{ constants.frankfurt }}"
           value: "{{ pythia_lb.elb.dns_name }}"
           # Routing policy
           identifier: "pythia@resvag"
 
-      # MEmcached not working
-      - route53:
-          state: present
-          zone: resvag.com
-          record: memcached.resvag.com
-          type: A
-          region: "{{ constants.frankfurt }}"
-          value: "{{memcached.elasticache_clusters.cache_nodes.endpoint.address}}"
-          # Routing policy
-          identifier: "memcached@resvag"
+      # - route53:
+      #     state: present
+      #     zone: resvag.com
+      #     overwrite: yes
+      #     record: memcached.resvag.com
+      #     type: A
+      #     region: "{{ constants.frankfurt }}"
+      #     value: "{{memcached.elasticache_clusters.cache_nodes.endpoint.address}}"
+      #     # Routing policy
+      #     identifier: "memcached@resvag"
 
       # Cloud Frontsad
       - cloudfront_distribution:

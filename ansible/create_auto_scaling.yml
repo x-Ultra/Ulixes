@@ -60,10 +60,10 @@
             key_name: "{{ constants.key_name }}"
             security_groups: ["{{ sg_ulixes.results[0].item }}"]
             volumes:
-            - device_name: /dev/sda1
-              volume_size: 120
-              volume_type: io1
-              iops: 3000
+            - device_name: /dev/xvda
+              volume_size: 8
+              volume_type: gp2
+              iops: 100
               delete_on_termination: true
 
         - ec2_lc:
@@ -72,21 +72,21 @@
             key_name: "{{ constants.key_name }}"
             security_groups: ["{{ sg_pythia.results[0].item }}"]
             volumes:
-            - device_name: /dev/sda1
-              volume_size: 120
-              volume_type: io1
-              iops: 3000
+            - device_name: /dev/xvda
+              volume_size: 8
+              volume_type: gp2
+              iops: 100
               delete_on_termination: true
 
         - ec2_asg:
             name: ulixes_asg
             launch_config_name: ulixes_lc
-            load_balancers: [ 'Load-Balancer-Ulixes' ]
+            load_balancers: [ 'load-balancer-ulixes' ]
             availability_zones: [ "{{ constants.frankfurt }}a", "{{ constants.frankfurt }}b" , "{{ constants.frankfurt }}c"]
             health_check_period: 60
             health_check_type: ELB
             replace_all_instances: yes
-            min_size: 1
+            min_size: 2
             max_size: 5
             vpc_zone_identifier: ["{{ subnet_id_a.results[0].item }}", "{{ subnet_id_b.results[0].item }}" , "{{ subnet_id_c.results[0].item }}"]
             desired_capacity: 3
@@ -96,12 +96,12 @@
         - ec2_asg:
             name: pythia_asg
             launch_config_name: pythia_lc
-            load_balancers: [ 'Load-Balancer-Pythia' ]
+            load_balancers: [ 'load-balancer-pythia' ]
             availability_zones: [ "{{ constants.frankfurt }}a", "{{ constants.frankfurt }}b"]
             health_check_period: 60
             health_check_type: ELB
             replace_all_instances: yes
-            min_size: 1
+            min_size: 2
             max_size: 5
             vpc_zone_identifier: ["{{ subnet_id_a.results[0].item }}", "{{ subnet_id_b.results[0].item }}"]
             desired_capacity: 3
