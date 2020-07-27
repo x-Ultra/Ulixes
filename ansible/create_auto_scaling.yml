@@ -52,13 +52,30 @@
             - "./subnet_id_c"
           register: subnet_id_c
 
+        - ec2_ami:
+            instance_id: "{{ ulixes_id.results[0].item }}"
+            state: present
+            wait: yes
+            name: ulixes_ami
+          register: ulixes_ami
 
+        - ec2_ami:
+            instance_id: "{{ pythia_id.results[0].item }}"
+            state: present
+            wait: yes
+            name: pythia_ami
+          register: pythia_ami
+
+        - debug:
+            msg: "{{ ulixes_ami }}"
         #Launch configurations
         - ec2_lc:
             name: ulixes_lc
-            instance_id: "{{ ulixes_id.results[0].item }}"
+            image_id: "{{ ulixes_ami.image_id }}"
             key_name: "{{ constants.key_name }}"
             security_groups: ["{{ sg_ulixes.results[0].item }}"]
+            instance_type: t2.micro
+            assign_public_ip: yes
             volumes:
             - device_name: /dev/xvda
               volume_size: 8
@@ -68,9 +85,11 @@
 
         - ec2_lc:
             name: pythia_lc
-            instance_id: "{{ pythia_id.results[0].item }}"
+            image_id: "{{ pythia_ami.image_id }}"
             key_name: "{{ constants.key_name }}"
             security_groups: ["{{ sg_pythia.results[0].item }}"]
+            instance_type: t2.micro
+            assign_public_ip: yes
             volumes:
             - device_name: /dev/xvda
               volume_size: 8

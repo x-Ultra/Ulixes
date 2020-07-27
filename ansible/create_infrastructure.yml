@@ -409,11 +409,10 @@
       # Load Balancer ulixes
       - local_action:
           module: ec2_elb_lb
-          name: "Load-Balancer-Ulixes"
+          name: "load-balancer-ulixes"
           state: present
           region: "{{ constants.frankfurt }}"
-          instance_ids:
-            - "{{ ulixes1.tagged_instances[0].id }}"
+          security_group_ids: "{{ sg_LoadBalancer.group_id }}"
           subnets:
             - "{{ subnet_a.subnet.id }}"
             - "{{ subnet_b.subnet.id }}"
@@ -434,7 +433,7 @@
       # Load Balancer pythia
       - local_action:
           module: ec2_elb_lb
-          name: "Load-Balancer-Pythia"
+          name: "load-balancer-pythia"
           state: present
           region: "{{ constants.frankfurt }}"
           instance_ids:

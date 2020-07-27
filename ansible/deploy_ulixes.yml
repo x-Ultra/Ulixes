@@ -1,5 +1,5 @@
 ---
-- hosts: tag_server_ulixes
+- hosts: web
   remote_user: ec2-user
 
   vars:
@@ -63,6 +63,12 @@
       become: yes 
       copy:
         src: "../config.json"
+        dest: "{{remote_app_dir}}/"
+
+    - name: copy aws credentials file
+      become: yes 
+      copy:
+        src: "../API_KEY.conf"
         dest: "{{remote_app_dir}}/"
 
     - name: start service

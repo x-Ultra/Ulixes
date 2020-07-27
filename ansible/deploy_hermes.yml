@@ -65,6 +65,12 @@
         src: "../config.json"
         dest: "{{remote_app_dir}}/"
 
+    - name: copy aws credentials file
+      become: yes 
+      copy:
+        src: "../API_KEY.conf"
+        dest: "{{remote_app_dir}}/"
+
     - name: start service
       become: yes
       command: systemctl daemon-reload
