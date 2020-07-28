@@ -395,16 +395,35 @@
           group_id: "{{ sg_pythia.group_id }}"
           image: "{{ constants.server_ami }}"
           instance_tags:
-            server: pythia sub a
+            server: pythia
           exact_count: 1
           count_tag: 
-            server: pythia sub a
+            server: pythia
           key_name: "{{ constants.key_name }}"
           region: "{{ constants.frankfurt }}"
           vpc_subnet_id: "{{ subnet_a.subnet.id }}"
           wait: yes
           wait_timeout: 320
         register: pythia1
+
+      - name: Creating EC2 instance of Pythia server on subnet b
+        ec2:
+          tenancy: default
+          assign_public_ip: yes
+          instance_type: t2.micro
+          group_id: "{{ sg_pythia.group_id }}"
+          image: "{{ constants.server_ami }}"
+          instance_tags:
+            server: pythia
+          exact_count: 1
+          count_tag:
+            server: pythia
+          key_name: "{{ constants.key_name }}"
+          region: "{{ constants.frankfurt }}"
+          vpc_subnet_id: "{{ subnet_b.subnet.id }}"
+          wait: yes
+          wait_timeout: 320
+        register: pythia2
 
       # Load Balancer ulixes
       - local_action:
@@ -429,30 +448,6 @@
             unhealthy_threshold: 2
             healthy_threshold: 10
         register: ulixes_lb
-
-      # Load Balancer pythia
-      - local_action:
-          module: ec2_elb_lb
-          name: "load-balancer-pythia"
-          state: present
-          region: "{{ constants.frankfurt }}"
-          instance_ids:
-            - "{{ pythia1.tagged_instances[0].id }}"
-          subnets:
-            - "{{ subnet_a.subnet.id }}"
-            - "{{ subnet_b.subnet.id }}"
-          listeners:
-            - protocol: tcp # options are http, https, ssl, tcp
-              load_balancer_port: "{{ constants.bootstrap_port }}"
-              instance_port: "{{ constants.bootstrap_port }}"
-          health_check:
-            ping_protocol: tcp # options are http, https, ssl, tcp
-            ping_port: "{{ constants.bootstrap_port }}"
-            response_timeout: 5 # seconds
-            interval: 30 # seconds
-            unhealthy_threshold: 2
-            healthy_threshold: 10
-        register: pythia_lb
 
       # Writing vpc ids on file
       - name: Writing subnet id a on file
@@ -479,19 +474,6 @@
         register: memcached
         #IP: memcached.elasticache_clusters.cache_nodes.endpoint.address
 
-
-      # - route53:
-      #     state: present
-      #     zone: resvag.com
-      #     overwrite: yes
-      #     record: memcached.resvag.com
-      #     type: A
-      #     region: "{{ constants.frankfurt }}"
-      #     value: "{{memcached.elasticache_clusters.cache_nodes.endpoint.address}}"
-      #     # Routing policy
-      #     identifier: "memcached@resvag"
-
-      # TODO use elb.ip NOT elb.dns_name !!!!!!!!!!!!!!!!
       # registering Domains in DNS
       - name: Using no-ip API to register (free) memcached ip into dns
         command:
@@ -501,12 +483,36 @@
         command:
           cmd: python dnsUpdater.py ulixes  {{ ulixes_lb.elb.dns_name }}
 
-      - name: Using no-ip API to register (free) pythia ip into dns
+      #Elastic IP for pythia instances
+      - name: Allocate a new elastic IP to pythia1
+        ec2_eip:
+          state: present
+          allow_reassociation: yes
+          device_id: "{{ pythia1.instance_ids }}"
+        register: eip1
+
+      - name: allocate a new elastic IP to pythia2
+        ec2_eip:
+          state: present
+          allow_reassociation: yes
+          device_id: "{{ pythia2.instance_ids }}"
+        register: eip2
+
+      - debug:
+          msg: "Pythia info: {{pythia1}}"
+
+
+      #Regitering pythia domain name in a free service (...)
+      - name: Registering Pythia1 IP in DNS
         command:
-          cmd: python dnsUpdater.py memcached  {{ pythia_lb.elb.dns_name }}
+          cmd: python updatePythiaDns.py  {{ eip1.public_ip }}
+
+      - name: Registering Pythia2 IP in DNS
+        command:
+          cmd: python updatePythiaDns.py  {{ eip2.public_ip }}
 
 
-      # Cloud Frontsad
+      # Cloud Front
       - cloudfront_distribution:
           state: present
           caller_reference: cloudfront resvag

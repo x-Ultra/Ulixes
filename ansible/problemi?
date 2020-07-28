@@ -1,10 +1,13 @@
 problemi?
 
 - Come facciamo a mettere nel domain gli ip dell'autoscaling di pithia?
+OK
 - Per qualche cazzo di motivo ansible non va avanti dopo aver creato l'autoscaling (solo per ulisse?????????????????????)
+OK
 - Non sono riuscito a capire come impostare una scaling policy
-
-- elasticache OK
+OK
+- elasticache
+OK
 
 Da cambiare
 
