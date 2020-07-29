@@ -22,18 +22,6 @@
             - "./ulixes_sg"
           register: sg_ulixes
 
-        - name: recover pythia id
-          debug: var=item
-          with_file:
-            - "./pythia"
-          register: pythia_id
-
-        - name: recover pythia security group
-          debug: var=item
-          with_file:
-            - "./pythia_sg"
-          register: sg_pythia
-
         - name: recover vpc id a
           debug: var=item
           with_file:
@@ -59,16 +47,7 @@
             name: ulixes_ami
           register: ulixes_ami
 
-        - ec2_ami:
-            instance_id: "{{ pythia_id.results[0].item }}"
-            state: present
-            wait: yes
-            name: pythia_ami
-          register: pythia_ami
-
-        - debug:
-            msg: "{{ ulixes_ami }}"
-        #Launch configurations
+        #Launch configuration
         - ec2_lc:
             name: ulixes_lc
             image_id: "{{ ulixes_ami.image_id }}"
@@ -83,20 +62,7 @@
               iops: 100
               delete_on_termination: true
 
-        - ec2_lc:
-            name: pythia_lc
-            image_id: "{{ pythia_ami.image_id }}"
-            key_name: "{{ constants.key_name }}"
-            security_groups: ["{{ sg_pythia.results[0].item }}"]
-            instance_type: t2.micro
-            assign_public_ip: yes
-            volumes:
-            - device_name: /dev/xvda
-              volume_size: 8
-              volume_type: gp2
-              iops: 100
-              delete_on_termination: true
-
+        #Autoscaling
         - ec2_asg:
             name: ulixes_asg
             launch_config_name: ulixes_lc
@@ -108,21 +74,6 @@
             min_size: 2
             max_size: 5
             vpc_zone_identifier: ["{{ subnet_id_a.results[0].item }}", "{{ subnet_id_b.results[0].item }}" , "{{ subnet_id_c.results[0].item }}"]
-            desired_capacity: 3
-            region: "{{ constants.frankfurt }}"
-
-        #Autoscaling groups
-        - ec2_asg:
-            name: pythia_asg
-            launch_config_name: pythia_lc
-            load_balancers: [ 'load-balancer-pythia' ]
-            availability_zones: [ "{{ constants.frankfurt }}a", "{{ constants.frankfurt }}b"]
-            health_check_period: 60
-            health_check_type: ELB
-            replace_all_instances: yes
-            min_size: 2
-            max_size: 5
-            vpc_zone_identifier: ["{{ subnet_id_a.results[0].item }}", "{{ subnet_id_b.results[0].item }}"]
             desired_capacity: 3
             region: "{{ constants.frankfurt }}"
 

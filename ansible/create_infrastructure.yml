@@ -460,14 +460,10 @@
       # Writing volumes Ids on file
       - name: Writing Ulixes id on file
         local_action: copy content="{{ ulixes1.tagged_instances[0].id }}" dest=./ulixes
-      - name: Writing pythia id on file
-        local_action: copy content="{{ pythia1.tagged_instances[0].id }}" dest=./pythia
       
       #Writing security group names on file
       - name: Writing Ulixes sg on file
         local_action: copy content="{{ sg_ulixes.group_id }}" dest=./ulixes_sg
-      - name: Writing pythia sg on file
-        local_action: copy content="{{ sg_pythia.group_id }}" dest=./pythia_sg
     
       - name: Recover memcached info
         elasticache_info:
@@ -487,6 +483,7 @@
       - name: Allocate a new elastic IP to pythia1
         ec2_eip:
           state: present
+          region: "{{ constants.frankfurt }}"
           allow_reassociation: yes
           device_id: "{{ pythia1.instance_ids }}"
         register: eip1
