@@ -87,24 +87,16 @@ try:
         #Primary key
         KeySchema=[
             {
-                "AttributeName": "Start",
+                "AttributeName": "ID",
                 "KeyType": "HASH"
-            }, 
-            {
-                "AttributeName": "End",
-                "KeyType": "RANGE"
             }
         ],
 
         # Primary key type
         AttributeDefinitions=[
             {
-                "AttributeName": "Start",
-                "AttributeType": "S"
-            },
-            {
-                "AttributeName": "End",
-                "AttributeType": "S"
+                "AttributeName": "ID",
+                "AttributeType": "N"
             }
         ],
 
@@ -145,7 +137,7 @@ lines = fd.readlines()
 with table.batch_writer() as batch:
     for i in range(1, len(lines)):
         splitted = lines[i].strip().split(", ")
-        batch.put_item(Item={"Start": splitted[0], "End": splitted[1], "Seconds": int(splitted[2]), "Transport": splitted[3], "Fog1": Decimal(splitted[4]), "Fog2" : Decimal(splitted[5])})
+        batch.put_item(Item={"ID": i, "Start": splitted[0], "End": splitted[1], "Seconds": int(splitted[2]), "Transport": splitted[3], "Fog1": Decimal(splitted[4]), "Fog2" : Decimal(splitted[5])})
         #print({"Name": splitted[0], "ID": int(i), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]) })
         if (i%100 == 0):
             print(i, " items inserted!")
