@@ -18,7 +18,6 @@
         cache_param_group: coolparamgroup
 
     tasks:
-
       - name: Creating VPC in Frankfurt
         ec2_vpc_net:
           name: Application_VPC_f
@@ -505,11 +504,11 @@
       #Regitering pythia domain name in a free service (...)
       - name: Registering Pythia1 IP in DNS
         command:
-          cmd: python updatePythiaDns.py  {{ eip1.public_ip }}
+          cmd: python updatePythiaDns.py  {{ eip1.public_ip }} 1
 
       - name: Registering Pythia2 IP in DNS
         command:
-          cmd: python updatePythiaDns.py  {{ eip2.public_ip }}
+          cmd: python updatePythiaDns.py  {{ eip2.public_ip }} 2
 
 
       # Cloud Front
