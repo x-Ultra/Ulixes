@@ -4,7 +4,7 @@ from helpers.parser import make_http_response, parse_http_request
 from helpers.graphManager import Graph
 from helpers.dbManager import recover_landmarks, recover_distances
 from heartbeat.heartbeat import join_bootstrap
-from helpers.configManager import get
+from helpers.configManager import get, hermes_get
 from urllib import parse
 import requests
 import random
@@ -14,15 +14,17 @@ CLOUD_IP = get("CLOUD_IP")
 CLOUD_PORT = int(get("CLOUD_PORT")) 
 
 #ID of the fog node
-FOG_ID = 1
+FOG_ID = int(hermes_get("ID"))
 
 port = int(get("FOG_PORT"))
    
-MY_IP = "172.74.2.203"
+MY_IP = hermes_get("MY_IP")
 BOOTSTRAP_IP = get("BOOTSTRAP_IP")
 ACCEPT_LIST_PORT = int(get("BOOTSTRAP_PORT"))
 BEAT_PORT = int(get("BEAT_PORT"))
 
+print(FOG_ID)
+print(MY_IP)
 def bootstrap():
     join_bootstrap(25, MY_IP, "1214.234", "1114.243", BOOTSTRAP_IP, ACCEPT_LIST_PORT,
                    BEAT_PORT, 10)

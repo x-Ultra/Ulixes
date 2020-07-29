@@ -5,6 +5,7 @@
   vars:
     remote_home: "/home/ec2-user"
     remote_app_dir: "{{remote_home}}/Ulixes"
+    my_id: "{{ id }}"
 
   tasks:
     - name: download Git
@@ -70,6 +71,12 @@
       copy:
         src: "../API_KEY.conf"
         dest: "{{remote_app_dir}}/"
+
+    - name: copy hermes file
+      become: yes 
+      copy:
+        src: "../hermes{{id}}.conf"
+        dest: "{{remote_app_dir}}/hermes.conf"
 
     - name: start service
       become: yes
