@@ -461,7 +461,6 @@
         command:
           cmd: python updatePythiaDns.py  {{ pythia2.instances.network_interfaces.associations.public_ip }} 2
 
-
       # Cloud Front
       - cloudfront_distribution:
           state: present
