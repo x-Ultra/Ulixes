@@ -452,31 +452,14 @@
         command:
           cmd: python dnsUpdater.py ulixes  {{ ulixes_lb.elb.dns_name }}
 
-      #Elastic IP for pythia instances
-      - name: Allocate a new elastic IP to pythia1
-        ec2_eip:
-          state: present
-          region: "{{ constants.frankfurt }}"
-          allow_reassociation: yes
-          device_id: "{{ pythia1.instance_ids }}"
-        register: eip1
-
-      - name: allocate a new elastic IP to pythia2
-        ec2_eip:
-          state: present
-          allow_reassociation: yes
-          region: "{{ constants.frankfurt }}"
-          device_id: "{{ pythia2.instance_ids }}"
-        register: eip2
-
       #Regitering pythia domain name in a free service (...)
       - name: Registering Pythia1 IP in DNS
         command:
-          cmd: python updatePythiaDns.py  {{ eip1.public_ip }} 1
+          cmd: python updatePythiaDns.py  {{ pythia1.instances.network_interfaces.associations.public_ip }} 1
 
       - name: Registering Pythia2 IP in DNS
         command:
-          cmd: python updatePythiaDns.py  {{ eip2.public_ip }} 2
+          cmd: python updatePythiaDns.py  {{ pythia2.instances.network_interfaces.associations.public_ip }} 2
 
 
       # Cloud Front
