@@ -3,3 +3,5 @@
 *.conf
 *.json
 full_setup.py
+ansible/freednspass
+ansible/noippass
