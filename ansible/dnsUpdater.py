@@ -8,7 +8,7 @@ def updateDns(system, domain):
     passwd = f.read()
     f.close()
     cmd = "dig +short %s @resolver1.opendns.com" % domain
-    newIp = subprocess.check_output(cmd, shell=True).splitlines()[0]
+    newIp = subprocess.check_output(cmd, shell=True).decode("utf-8").split("\n")[0]
 
     if system == "memcached":
         url = "http://alterramulti@yahoo.it:%s@dynupdate.no-ip.com/nic/update?hostname=memcached-resvag.ddns.net&myip=%s"

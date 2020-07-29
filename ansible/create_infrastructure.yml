@@ -10,7 +10,7 @@
         milano: eu-south-1
         server_ami: ami-00edb93a4d68784e3
         server_ami_m: ami-01ce136ac703e9899
-        key_name: KeyPairF
+        key_name: Test
         key_name_m: KeyPair
         ulixes_port: 5005
         hermes_port: 8888
@@ -263,32 +263,6 @@
               rule_desc: allow all on beat port
         register: sg_memcached
 
-      #Secutiry groups (milano)
-      - name: Creating security groups for Hermes (Milano)
-        ec2_group:
-          state: present
-          name: SG Hermes
-          description: Inbound roules for Hermes servers
-          vpc_id: "{{ vpc_m.vpc.id }}"
-          region: "{{ constants.milano }}"
-          rules:
-            - proto: tcp
-              ports:
-              - "{{ constants.hermes_port }}"
-              cidr_ip: 0.0.0.0/0
-              rule_desc: allow all on port 8888
-            - proto: tcp
-              ports:
-              - "{{ constants.beat_port }}"
-              cidr_ip: 0.0.0.0/0
-              rule_desc: allow all on beat port
-            - proto: tcp
-              ports:
-              - "{{ constants.bootstrap_port }}"
-              cidr_ip: 0.0.0.0/0
-              rule_desc: allow all on bootstrap port
-        register: sg_hermes
-
       # Memcached
       # Add or change a subnet group
       - name: Creating memcached subnet group
@@ -332,10 +306,10 @@
           group_id: "{{ sg_hermes.group_id }}"
           image: "{{ constants.server_ami_m }}"
           instance_tags:
-            server: hermes sub a
+            server: hermes
           exact_count: 1
           count_tag: 
-            server: hermes sub a
+            server: hermes
           key_name: "{{ constants.key_name_m }}"
           region: "{{ constants.milano }}"
           vpc_subnet_id: "{{ subnet_a_m.subnet.id }}"
@@ -351,10 +325,10 @@
           group_id: "{{ sg_hermes.group_id }}"
           image: "{{ constants.server_ami_m }}"
           instance_tags:
-            server: hermes sub b
+            server: hermes
           exact_count: 1
           count_tag: 
-            server: hermes sub b
+            server: hermes
           key_name: "{{ constants.key_name_m }}"
           region: "{{ constants.milano }}"
           vpc_subnet_id: "{{ subnet_b_m.subnet.id }}"
@@ -373,10 +347,10 @@
           group_id: "{{ sg_ulixes.group_id }}"
           image: "{{ constants.server_ami }}"
           instance_tags:
-            server: ulixes sub a
+            server: ulixes
           exact_count: 1
           count_tag: 
-            server: ulixes sub a
+            server: ulixes
           key_name: "{{ constants.key_name }}"
           region: "{{ constants.frankfurt }}"
           vpc_subnet_id: "{{ subnet_a.subnet.id }}"
@@ -491,12 +465,9 @@
         ec2_eip:
           state: present
           allow_reassociation: yes
+          region: "{{ constants.frankfurt }}"
           device_id: "{{ pythia2.instance_ids }}"
         register: eip2
-
-      - debug:
-          msg: "Pythia info: {{pythia1}}"
-
 
       #Regitering pythia domain name in a free service (...)
       - name: Registering Pythia1 IP in DNS

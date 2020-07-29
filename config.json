@@ -3,15 +3,15 @@
 	"USE_DINAMODB_DIST" : "True",
 	"USE_GOOGLE" : "False",
 
-	"CLUSTER_ENDPOINT" :"testmemcached.nryvye.cfg.euc1.cache.amazonaws.com",
+	"CLUSTER_ENDPOINT" :"memcached-resvag.ddns.net",
 	"CLUSTER_PORT": "11211",
 	"WAIT_ON_SEARCH" : "INSERTING",
 	"POOL_SEC" : "1",
 
-	"CLOUD_IP" : "127.0.0.1",
+	"CLOUD_IP" : "ulixes-resvag.ddns.net",
 	"CLOUD_PORT" : "5005",  
 	"FOG_PORT" : "8888",
-	"BOOTSTRAP_IP" : "172.74.3.189",
+	"BOOTSTRAP_IP" : "pythia-resvag.cloudns.cl",
 	"BOOTSTRAP_PORT" : "11111",
 	"BEAT_PORT" : "9999"
 }
