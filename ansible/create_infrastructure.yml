@@ -17,7 +17,6 @@
         cache_sub_group_name: memsubgroup
         cache_param_group: coolparamgroup
 
-
     tasks:
       - name: Creating VPC in Frankfurt
         ec2_vpc_net:
