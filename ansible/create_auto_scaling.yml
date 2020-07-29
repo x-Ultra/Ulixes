@@ -5,7 +5,7 @@
       constants:
         frankfurt: eu-central-1
         milano: eu-south-1
-        key_name: Test
+        key_name: KeyPairF
         key_name_m: KeyPair
 
     tasks:

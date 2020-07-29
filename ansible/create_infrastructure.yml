@@ -10,7 +10,7 @@
         milano: eu-south-1
         server_ami: ami-00edb93a4d68784e3
         server_ami_m: ami-01ce136ac703e9899
-        key_name: Test
+        key_name: KeyPairF
         key_name_m: KeyPair
         ulixes_port: 5005
         hermes_port: 8888
@@ -438,28 +438,34 @@
       - name: Writing Ulixes sg on file
         local_action: copy content="{{ sg_ulixes.group_id }}" dest=./ulixes_sg
 
+
       #Hermes info
-      local_action:
-          module: lineinfile
-          dest: "../hermes1.conf"
-          line: "1"
-          create: yes
-      local_action:
-          module: lineinfile
-          dest: "../hermes1.conf"
-          line: "{{ hermes1.public_ip }}"
+      - name: Writing conf file
+        local_action:
+            module: lineinfile
+            dest: "../hermes1.conf"
+            line: "1"
+            create: yes
+
+      - name: Writing conf file
+        local_action:
+            module: lineinfile
+            dest: "../hermes1.conf"
+            line: "{{ hermes1.tagged_instances[0].public_ip }}"
       
       #Hermes info
-      local_action:
-          module: lineinfile
-          dest: "../hermes2.conf"
-          line: "2"
-          create: yes
-      local_action:
-          module: lineinfile
-          dest: "../hermes2.conf"
-          line: "{{ hermes2.public_ip }}"
-    
+      - name: Writing conf file
+        local_action:
+            module: lineinfile
+            dest: "../hermes2.conf"
+            line: "2"
+            create: yes
+      - name: Writing conf file
+        local_action:
+            module: lineinfile
+            dest: "../hermes2.conf"
+            line: "{{ hermes2.tagged_instances[0].public_ip }}"
+      
       - name: Recover memcached info
         elasticache_info:
         register: memcached
