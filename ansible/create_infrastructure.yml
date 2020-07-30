@@ -10,7 +10,7 @@
         milano: eu-south-1
         server_ami: ami-00edb93a4d68784e3
         server_ami_m: ami-01ce136ac703e9899
-        key_name: KeyPairF
+        key_name: Test
         key_name_m: KeyPair
         ulixes_port: 5005
         hermes_port: 8888
@@ -483,11 +483,11 @@
       #Regitering pythia domain name in a free service (...)
       - name: Registering Pythia1 IP in DNS
         command:
-          cmd: python updatePythiaDns.py  {{ pythia1.instances.network_interfaces.associations.public_ip }} 1
+          cmd: python updatePythiaDns.py  {{ pythia1.tagged_instances[0].public_ip }} 1
 
       - name: Registering Pythia2 IP in DNS
         command:
-          cmd: python updatePythiaDns.py  {{ pythia2.instances.network_interfaces.associations.public_ip }} 2
+          cmd: python updatePythiaDns.py  {{ pythia2.tagged_instances[0].public_ip }} 2
 
       # Cloud Front
       - cloudfront_distribution:
