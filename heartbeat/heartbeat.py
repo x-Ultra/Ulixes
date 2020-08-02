@@ -214,7 +214,7 @@ def listen_beats(retryAfterSeconds, ip, lat, lon, bootstrapip, bootsrapport, bea
     # the server fog hs to the beats on the 'beatPort' that he has specified in the JOIN REQUEST !
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((ip, beatPort))
+    sock.bind(("0.0.0.0", beatPort))
 
     # if the client that has already registered on the bootstrap
     # does not hear beats coming form the bootstrap within

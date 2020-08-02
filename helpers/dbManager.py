@@ -6,7 +6,7 @@ from helpers.configManager import cred_get
 USE_DINAMODB_LAND = get("USE_DINAMODB_LAND") == "True"
 USE_DINAMODB_DIST = get("USE_DINAMODB_DIST") == "True"
 
-def get_landmarks(table, fog_id=None):
+def get_landmarks(fog_id=None):
 
 	#@ fog_id: int, id of the fog node that colled this function
 	#@ return: list of items corressponding to the fog id or all the items
@@ -17,11 +17,14 @@ def get_landmarks(table, fog_id=None):
     aws_secret_access_key=cred_get("AWS_SECRET_ACCESS_KEY"))
 	table = dynamodb.Table("Landmarks")
 
+	print("ciao", fog_id)
 	if (fog_id == None):
+		print("None")
 		# recover all items
 		resp = table.scan(ProjectionExpression = '#n, ID, Lat, #l, Description, PictureUrl',
                   ExpressionAttributeNames = {'#n': 'Name', '#l' : 'Long'})
 	else:
+		print("ciao")
 		#Recover items corrisponding to a specific fog_id
 		resp = table.scan(ProjectionExpression = '#n, ID, Lat, #l, Description, PictureUrl',
                   ExpressionAttributeNames = {'#n': 'Name', '#l' : 'Long'},
@@ -88,7 +91,9 @@ def recover_landmarks(fog_id=None):
 
 	res = {}
 	if USE_DINAMODB_LAND:
+		print("recover", fog_id)
 		items = get_landmarks(fog_id)
+		print(len(items))
 		for item in items:
 			#print(item)
 			#print(item["Name"])

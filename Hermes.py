@@ -8,6 +8,7 @@ from helpers.configManager import get, hermes_get
 from urllib import parse
 import requests
 import random
+import subprocess
 
 #Cloud ip and port
 CLOUD_IP = get("CLOUD_IP")
@@ -18,7 +19,7 @@ FOG_ID = int(hermes_get("ID"))
 
 port = int(get("FOG_PORT"))
    
-MY_IP = hermes_get("MY_IP")
+MY_IP = subprocess.check_output("dig +short myip.opendns.com @resolver1.opendns.com", shell=True).decode("utf-8").split("\n")[0]
 BOOTSTRAP_IP = get("BOOTSTRAP_IP")
 ACCEPT_LIST_PORT = int(get("BOOTSTRAP_PORT"))
 BEAT_PORT = int(get("BEAT_PORT"))
@@ -58,7 +59,7 @@ class ClientThread(threading.Thread):
         else:
             node_index, dist, lat, long = get_player_node(parameters["latitude"] , parameters["longitude"], landmarks, parameters["trans"])
             
-            print(node_index, dist)
+            print(node_index, dist, infinite_distances_walking[node_index])
             if int(parameters["interval"]) - dist < 0:
                 json_res = "{}"
 
@@ -71,9 +72,9 @@ class ClientThread(threading.Thread):
                 self.csocket.send(response.encode("utf-8"))
             else:
                 if (parameters["trans"] == "0"):
-                    check = g_walking.check_index(node_index) and infinite_distances_walking[node_index] > int(parameters["interval"])
+                    check = g_walking.check_index(node_index) and infinite_distances_walking[node_index] > int(parameters["interval"])-dist
                 else:
-                    check = g_driving.check_index(node_index) and infinite_distances_driving[node_index] > int(parameters["interval"])
+                    check = g_driving.check_index(node_index) and infinite_distances_driving[node_index] > int(parameters["interval"])-dist
                 
 
                 if check:
@@ -117,12 +118,14 @@ class ClientThread(threading.Thread):
         self.csocket.close()
 
 #load itineraries from db
+print(FOG_ID)
 landmarks = recover_landmarks(FOG_ID)
 
 print("Landmarks recovered")
 
+print(len(landmarks))
 # Call google maps for distances
-distances = recover_distances(FOG_ID)
+distances = recover_distances()
 
 print("Distances recovered")
 
@@ -166,6 +169,7 @@ print("Graph for driving built")
 #get distance from infinite for walking
 infinite_distances_walking = g_walking.bellman_ford(-1)
 
+print(infinite_distances_walking)
 print("Distance from infinite calculated for walking")
 
 #get distance from infinite for dricing
