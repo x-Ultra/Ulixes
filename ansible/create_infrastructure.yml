@@ -10,7 +10,7 @@
         milano: eu-south-1
         server_ami: ami-00edb93a4d68784e3
         server_ami_m: ami-01ce136ac703e9899
-        key_name: KeyPairF
+        key_name: Test
         key_name_m: KeyPair
         ulixes_port: 5005
         hermes_port: 8888

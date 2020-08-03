@@ -5,6 +5,8 @@ import googlemaps
 from images import pictureManager
 import datetime
 from helpers.configManager import get
+import pytz
+from time import ctime
 
 USE_GOOGLE = get("USE_GOOGLE") == "True"
 
@@ -104,13 +106,14 @@ def build_json_itineraries(solutions, transp,userLat, userLon, t, graph, dist):
     #               [(12, [1,2,3,4]), (1, [1,2])]
 
     itineraryList = []
-    nowNow = datetime.datetime.now()
-    departure = datetime.datetime.now().strftime('%H:%M')
+    rome = pytz.timezone('Europe/Rome')
+    nowNow = datetime.datetime.now(rome)
+
     count = 0
     for solution in solutions:
         # current time hh:mmù
         now = nowNow
-        departure = datetime.datetime.now().strftime('%H:%M')
+        departure = datetime.datetime.now(rome).strftime('%H:%M')
         itinerary = solution[1]
         # something like [1, 2, 3, 4]
         # array of dictionaries
