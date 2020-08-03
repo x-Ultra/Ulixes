@@ -5,3 +5,4 @@
 full_setup.py
 ansible/freednspass
 ansible/noippass
+ansible/group_vars/tag*
