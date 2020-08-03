@@ -39,12 +39,12 @@ class ClientThread(threading.Thread):
             self.csocket.send(response.encode("utf-8"))
         else:
             if int(parameters["interval"]) < 0:
-                json_res = "{}"
+                json_res = "[{}]"
             else:
                 node_index, dist, lat, long = get_player_node(parameters["latitude"] , parameters["longitude"], landmarks, parameters["trans"])
 
                 if int(parameters["interval"]) - dist < 0:
-                    json_res = "{}"
+                    json_res = "[{}]"
                 else:
                     #calculate itineraries from parameters
                     if (parameters["trans"] == "0"):

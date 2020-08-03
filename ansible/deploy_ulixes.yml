@@ -28,9 +28,15 @@
     - name: install required Python modules
       become: yes 
       pip:
-        name: googlemaps
+        name: pytz
         executable: pip3
 
+    - name: install required Python modules
+      become: yes 
+      pip:
+        name: googlemaps
+        executable: pip3
+        
     - name: install required Python modules
       become: yes 
       pip:

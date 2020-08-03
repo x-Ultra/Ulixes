@@ -61,7 +61,7 @@ class ClientThread(threading.Thread):
             
             print(node_index, dist, infinite_distances_walking[node_index])
             if int(parameters["interval"]) - dist < 0:
-                json_res = "{}"
+                json_res = "[{}]"
 
                 #trasform into http response
                 response = make_http_response(200, parameters["version"], json_res)
