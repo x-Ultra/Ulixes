@@ -44,10 +44,10 @@
         executable: pip3
 
     - name: install required Python modules
-        become: yes
-        pip:
-          name: pytz
-          executable: pip3
+      become: yes
+      pip:
+        name: pytz
+        executable: pip3
 
     - name: download Ulixes repository
       command: git clone https://github.com/UltraLe/Ulixes.git "{{ remote_app_dir }}"
