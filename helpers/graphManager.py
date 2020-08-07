@@ -174,5 +174,10 @@ class Graph:
 
 		return int(temp.weight)
 
+	def get_visit_time(self, id1):
+
+		id1 = int(id1)
+
+		return self.nodes_weights[id1]
 
 

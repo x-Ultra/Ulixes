@@ -146,7 +146,7 @@ def build_json_itineraries(solutions, transp,userLat, userLon, t, graph, dist):
             if position != 1:
                 id1 = itinerary[position - 2]
                 id2 = itinerary[position - 1]
-                secondsToNext = graph.get_distance(id1, id2)
+                secondsToNext = graph.get_distance(id1, id2) + graph.get_visit_time(id1)
                 arrTime = now + datetime.timedelta(seconds=secondsToNext)
                 itinMonument["ExpectedArrTime"] = arrTime.strftime('%H:%M')
             else:
