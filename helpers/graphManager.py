@@ -178,6 +178,6 @@ class Graph:
 
 		id1 = int(id1)
 
-		return self.nodes_weights[id1]
+		return self.nodes_times[id1]
 
 

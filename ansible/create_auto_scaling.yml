@@ -10,6 +10,16 @@
 
     tasks:
         # Rcover information from files
+        - name: recover load balancer dns
+          debug: var=item
+          with_file:
+            - "./lb_dns"
+          register: lb_dns
+
+        - name: Using no-ip API to register (free) ulixes ip into dns
+          command:
+            cmd: python dnsUpdater.py ulixes  {{ lb_dns.results[0].item }}
+
         - name: recover ulixes id
           debug: var=item
           with_file:

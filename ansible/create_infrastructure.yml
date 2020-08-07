@@ -423,6 +423,10 @@
         register: ulixes_lb
 
       # Writing vpc ids on file
+      - name: Writing lb dns on file
+        local_action: copy content="{{ ulixes_lb.elb.dns_name }}" dest=./lb_dns
+      
+      # Writing vpc ids on file
       - name: Writing subnet id a on file
         local_action: copy content="{{ subnet_a.subnet.id }}" dest=./subnet_id_a
       - name: Writing subnet id b on file
@@ -478,9 +482,6 @@
         command:
           cmd: python dnsUpdater.py memcached  {{ memcached.elasticache_clusters[0].cache_nodes[0].endpoint.address }}
 
-      - name: Using no-ip API to register (free) ulixes ip into dns
-        command:
-          cmd: python dnsUpdater.py ulixes  {{ ulixes_lb.elb.dns_name }}
 
       #Regitering pythia domain name in a free service (...)
       - name: Registering Pythia1 IP in DNS
