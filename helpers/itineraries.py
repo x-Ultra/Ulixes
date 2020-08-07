@@ -57,9 +57,11 @@ def get_player_node(lat, long, landmarks, transport):
     for k, ld in landmarks.items():
         closest = ordered_insert(closest, (ld[0], haversine(lat, long, ld[1], ld[2]), ld[1], ld[2]))[:5]
 
+    # If we we find a node at distance 0 its the closest use it
     if closest[0][1] == 0:
         return closest[0][0], 0, closest[0][2], closest[0][3]
 
+    # If we can, use google api
     if USE_GOOGLE:
         print("Called Google")
         # Find closest according to google
@@ -82,9 +84,13 @@ def get_player_node(lat, long, landmarks, transport):
                 min_dist = result["rows"][0]["elements"][0]["duration"]["value"]
 
         return closest[i][0], min_dist, closest[i][2], closest[i][3]
+    # if we cant estimate time with distance
     else:
-        return closest[0][0], closest[0][1]*60*60/5, closest[0][2], closest[0][3]
-
+        if transport == "0":
+            return closest[0][0], closest[0][1]*60*60/5, closest[0][2], closest[0][3]
+        else:
+            return closest[0][0], closest[0][1]*60*60/50, closest[0][2], closest[0][3]
+            
 
 # function that given the name of a monument (the same name used to save te monument into DynamoDB),
 # returns its image after a query into the DB
