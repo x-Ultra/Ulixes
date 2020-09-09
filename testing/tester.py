@@ -8,11 +8,11 @@ MAX_INTERVAL = 21600
 ## 1 = driving
 TRANSPORT = 0
 
-ADDRESS = "http://127.0.0.1:5005"
+ADDRESS = "http://load-balancer-ulixes-962120851.eu-central-1.elb.amazonaws.com:5005"
 
 fd = open("results.csv", "a")
 
-TRIES_PER_INTERVAL = 10
+TRIES_PER_INTERVAL = 50
 
 for interval in range(MIN_INTERVAL, MAX_INTERVAL, 600):
 	time_sum = 0.0

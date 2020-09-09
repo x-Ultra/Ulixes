@@ -67,7 +67,7 @@ lines = fd.readlines()
 with table.batch_writer() as batch:
     for i in range(1, len(lines)):
         splitted = lines[i].strip().split(", ")
-        batch.put_item(Item={"Name": splitted[0], "ID": int(i-1), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]), "Fog1": Decimal(splitted[3]), "Fog2" : Decimal(splitted[4]), "PictureUrl" : splitted[5], "Description": splitted[6]})
+        batch.put_item(Item={"Name": splitted[0], "ID": int(i-1), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]), "Fog1": Decimal(splitted[3]), "Fog2" : Decimal(splitted[4]), "PictureUrl" : splitted[5], "Description": "".join(splitted[6:])})
         #print({"Name": splitted[0], "ID": int(i), "Lat": Decimal(splitted[1]), "Long": Decimal(splitted[2]) })
 
 print("Landamrks are online!")

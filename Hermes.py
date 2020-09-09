@@ -100,7 +100,6 @@ class ClientThread(threading.Thread):
 
                     #pop version from parameters
                     version = parameters.pop('version', None)
-                    
                     #request the cloud with the original parameters
                     url = "http://" + CLOUD_IP + ":" + str(CLOUD_PORT)
                     parameters["latitude"] = lat

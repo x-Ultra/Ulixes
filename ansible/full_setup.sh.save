@@ -1,0 +1,11 @@
+cd#!/bin/bash
+cd ..
+python3 DB_setup.py
+cd ansible
+ansible-playbook create_infrastructure.yml
+ansible-playbook -i ec2.py deploy_ulixes.yml
+ansible-playbook -i ec2.py deploy_pythia.yml
+ansible-playbook -i ec2.py deploy_hermes.yml --extra-vars "id=1"
+ansible-playbook create_autoscaling.yml
+
+
